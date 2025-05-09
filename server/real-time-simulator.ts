@@ -87,6 +87,9 @@ export function startSimulation(config: Partial<typeof DEFAULT_CONFIG> = {}) {
       if (connectionCount % 30 === 0) {
         await performAnomalyDetection();
       }
+      
+      // Mettre à jour les statistiques de réseau
+      await updateNetworkActivity();
     } catch (error) {
       console.error('[Simulation] Error in batch generation:', error);
     }

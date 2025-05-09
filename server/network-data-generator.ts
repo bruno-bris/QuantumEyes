@@ -5,22 +5,20 @@
 import { v4 as uuidv4 } from 'uuid';
 import { spawn } from 'child_process';
 
+// Type pour les connexions générées - compatible avec le schéma de base de données
 export type NetworkConnection = {
   id?: number;
   source_ip: string;
   destination_ip: string;
   protocol: string;
-  port: number;
+  destination_port: number;
   packet_size?: number;
   timestamp?: Date;
-  duration?: number;
-  flags?: string;
-  bytes_sent?: number;
-  bytes_received?: number;
-  organization_id?: number;
-  is_anomalous?: boolean;
-  anomaly_score?: number;
-  anomaly_type?: string;
+  duration?: string;
+  organizationId?: number;
+  isAnomaly?: boolean;
+  anomalyScore?: string;
+  anomalyType?: string;
 };
 
 // Protocoles possibles
@@ -124,17 +122,14 @@ export function generateRandomConnection(options: {
     source_ip: sourceIP,
     destination_ip: destIP,
     protocol,
-    port,
+    destination_port: port, // Renommé pour correspondre au schéma
     packet_size: packetSize,
     timestamp: new Date(),
-    duration,
-    flags,
-    bytes_sent: bytesSent,
-    bytes_received: bytesReceived,
-    organization_id: organizationId,
-    is_anomalous: isAnomalous,
-    anomaly_score: anomalyScore ? parseFloat(anomalyScore) : undefined,
-    anomaly_type: anomalyType
+    duration: duration.toString(), // Convertir en string pour correspondre au schéma
+    organizationId, // Renommé pour correspondre au schéma
+    isAnomaly: isAnomalous, // Renommé pour correspondre au schéma
+    anomalyScore: anomalyScore, // Déjà une string
+    anomalyType: anomalyType // Renommé pour correspondre au schéma
   };
 }
 
@@ -228,8 +223,8 @@ export function generateNetworkGraph(connections: NetworkConnection[]): {
     source: conn.source_ip,
     target: conn.destination_ip,
     protocol: conn.protocol,
-    port: conn.port,
-    anomalous: conn.is_anomalous
+    port: conn.destination_port,
+    anomalous: conn.isAnomaly
   }));
   
   return { nodes, edges };
@@ -275,7 +270,7 @@ for conn in data:
         G.add_node(target)
     
     # Paramètres de la connexion
-    is_anomalous = conn.get('is_anomalous', False)
+    is_anomalous = conn.get('isAnomaly', False)
     protocol = conn.get('protocol', 'TCP')
     
     # Ajouter l'arête avec des attributs
