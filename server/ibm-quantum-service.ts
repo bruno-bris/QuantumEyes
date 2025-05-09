@@ -14,7 +14,9 @@ export class IBMQuantumService {
   private channel: string = 'ibm_cloud'; // Nouveau canal par défaut
   
   constructor(apiKey: string) {
-    this.apiKey = apiKey;
+    // Utiliser la variable d'environnement si disponible, sinon utiliser la clé fournie
+    this.apiKey = process.env.IBM_QUANTUM_API_KEY || apiKey;
+    console.log(`IBM Quantum API - utilisation de la clé${this.apiKey ? ' (masquée)' : ' par défaut'}`);
   }
   
   /**
