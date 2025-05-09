@@ -3,8 +3,10 @@ import {
   type InsertOrganization, type InsertOrganizationUser,
   type CyberMaturity, type SecurityMetrics, type Threat,
   type NetworkActivity, type Vulnerability,
+  type QuantumConfig, type NetworkConnection, type AnalysisResult,
   type InsertThreat, type InsertNetworkActivity, type InsertVulnerability,
-  type InsertCyberMaturity, type InsertSecurityMetrics
+  type InsertCyberMaturity, type InsertSecurityMetrics,
+  type InsertQuantumConfig, type InsertNetworkConnection, type InsertAnalysisResult
 } from "@shared/schema";
 
 import { DatabaseStorage } from "./storage-db";
@@ -46,6 +48,25 @@ export interface IStorage {
   getVulnerabilities(organizationId: number): Promise<Vulnerability[]>;
   createVulnerability(vulnerability: InsertVulnerability): Promise<Vulnerability>;
   updateVulnerabilityStatus(id: number, status: string): Promise<Vulnerability | undefined>;
+  
+  // Quantum Configs
+  getQuantumConfigs(organizationId: number): Promise<QuantumConfig[]>;
+  getQuantumConfig(id: number): Promise<QuantumConfig | undefined>;
+  createQuantumConfig(config: InsertQuantumConfig): Promise<QuantumConfig>;
+  updateQuantumConfig(id: number, config: Partial<InsertQuantumConfig>): Promise<QuantumConfig | undefined>;
+  deleteQuantumConfig(id: number): Promise<boolean>;
+  
+  // Network Connections
+  getNetworkConnections(organizationId: number, limit?: number): Promise<NetworkConnection[]>;
+  getAnomalousConnections(organizationId: number): Promise<NetworkConnection[]>;
+  createNetworkConnection(connection: InsertNetworkConnection): Promise<NetworkConnection>;
+  createManyNetworkConnections(connections: InsertNetworkConnection[]): Promise<NetworkConnection[]>;
+  deleteNetworkConnections(organizationId: number): Promise<boolean>;
+  
+  // Analysis Results
+  getAnalysisResults(organizationId: number, limit?: number): Promise<AnalysisResult[]>;
+  getAnalysisResult(id: number): Promise<AnalysisResult | undefined>;
+  createAnalysisResult(result: InsertAnalysisResult): Promise<AnalysisResult>;
 }
 
 // Utiliser l'implémentation de base de données 

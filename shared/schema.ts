@@ -180,6 +180,90 @@ export const insertVulnerabilitySchema = createInsertSchema(vulnerabilities).pic
   status: true,
 });
 
+// Quantum Configuration Schema
+export const quantumConfigs = pgTable("quantum_configs", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id),
+  name: text("name").notNull(),
+  qubits: integer("qubits").notNull().default(4),
+  feature_map: text("feature_map").notNull().default("zz"),
+  ansatz: text("ansatz").notNull().default("real"),
+  shots: integer("shots").notNull().default(1024),
+  model_type: text("model_type").notNull().default("qsvc"),
+  active: boolean("active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertQuantumConfigSchema = createInsertSchema(quantumConfigs).pick({
+  organizationId: true,
+  name: true,
+  qubits: true,
+  feature_map: true,
+  ansatz: true,
+  shots: true,
+  model_type: true,
+  active: true,
+});
+
+// Network Connection Data Schema (pour les données issues de l'analyse réseau)
+export const networkConnections = pgTable("network_connections", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id),
+  source_ip: text("source_ip").notNull(),
+  destination_ip: text("destination_ip").notNull(),
+  protocol: text("protocol").notNull(),
+  destination_port: integer("destination_port"),
+  packet_size: integer("packet_size"),
+  duration: text("duration"),
+  timestamp: timestamp("timestamp").defaultNow(),
+  isAnomaly: boolean("is_anomaly").default(false),
+  anomalyScore: text("anomaly_score"),
+  anomalyType: text("anomaly_type"),
+});
+
+export const insertNetworkConnectionSchema = createInsertSchema(networkConnections).pick({
+  organizationId: true,
+  source_ip: true,
+  destination_ip: true,
+  protocol: true,
+  destination_port: true,
+  packet_size: true,
+  duration: true,
+  isAnomaly: true,
+  anomalyScore: true,
+  anomalyType: true,
+});
+
+// Network Analysis Results Schema
+export const analysisResults = pgTable("analysis_results", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id),
+  configId: integer("config_id").references(() => quantumConfigs.id),
+  timestamp: timestamp("timestamp").defaultNow(),
+  nodesAnalyzed: integer("nodes_analyzed"),
+  edgesAnalyzed: integer("edges_analyzed"),
+  anomaliesDetected: integer("anomalies_detected").default(0),
+  executionTime: text("execution_time"),
+  circuitImageUrl: text("circuit_image_url"),
+  histogramImageUrl: text("histogram_image_url"),
+  graphImageUrl: text("graph_image_url"),
+  results: json("results"),
+});
+
+export const insertAnalysisResultSchema = createInsertSchema(analysisResults).pick({
+  organizationId: true,
+  configId: true,
+  nodesAnalyzed: true,
+  edgesAnalyzed: true,
+  anomaliesDetected: true,
+  executionTime: true,
+  circuitImageUrl: true,
+  histogramImageUrl: true,
+  graphImageUrl: true,
+  results: true,
+});
+
 // Export types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -204,3 +288,12 @@ export type NetworkActivity = typeof networkActivity.$inferSelect;
 
 export type InsertVulnerability = z.infer<typeof insertVulnerabilitySchema>;
 export type Vulnerability = typeof vulnerabilities.$inferSelect;
+
+export type InsertQuantumConfig = z.infer<typeof insertQuantumConfigSchema>;
+export type QuantumConfig = typeof quantumConfigs.$inferSelect;
+
+export type InsertNetworkConnection = z.infer<typeof insertNetworkConnectionSchema>;
+export type NetworkConnection = typeof networkConnections.$inferSelect;
+
+export type InsertAnalysisResult = z.infer<typeof insertAnalysisResultSchema>;
+export type AnalysisResult = typeof analysisResults.$inferSelect;

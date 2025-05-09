@@ -1,12 +1,15 @@
 import {
   users, organizations, organizationUsers,
   securityMetrics, cyberMaturity, threats, networkActivity, vulnerabilities,
+  quantumConfigs, networkConnections, analysisResults,
   type User, type Organization, type OrganizationUser,
   type SecurityMetrics, type CyberMaturity, type Threat,
   type NetworkActivity, type Vulnerability,
+  type QuantumConfig, type NetworkConnection, type AnalysisResult,
   type InsertOrganization, type InsertOrganizationUser,
   type InsertThreat, type InsertNetworkActivity, type InsertVulnerability,
-  type InsertCyberMaturity, type InsertSecurityMetrics
+  type InsertCyberMaturity, type InsertSecurityMetrics,
+  type InsertQuantumConfig, type InsertNetworkConnection, type InsertAnalysisResult
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
@@ -350,5 +353,169 @@ export class DatabaseStorage implements IStorage {
       .where(eq(vulnerabilities.id, id))
       .returning();
     return updatedVuln;
+  }
+
+  // Quantum Config Methods
+  async getQuantumConfigs(organizationId: number): Promise<QuantumConfig[]> {
+    const configs = await db
+      .select()
+      .from(quantumConfigs)
+      .where(eq(quantumConfigs.organizationId, organizationId));
+    
+    if (configs.length === 0) {
+      // Return a default configuration if none exist
+      return [{
+        id: 1,
+        organizationId,
+        name: "Configuration par défaut",
+        qubits: 4,
+        feature_map: "zz",
+        ansatz: "real",
+        shots: 1024,
+        model_type: "qsvc",
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }];
+    }
+    
+    return configs;
+  }
+  
+  async getQuantumConfig(id: number): Promise<QuantumConfig | undefined> {
+    const [config] = await db
+      .select()
+      .from(quantumConfigs)
+      .where(eq(quantumConfigs.id, id));
+    
+    return config;
+  }
+  
+  async createQuantumConfig(configData: InsertQuantumConfig): Promise<QuantumConfig> {
+    const [config] = await db
+      .insert(quantumConfigs)
+      .values({
+        ...configData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    
+    return config;
+  }
+  
+  async updateQuantumConfig(id: number, configData: Partial<InsertQuantumConfig>): Promise<QuantumConfig | undefined> {
+    const [updatedConfig] = await db
+      .update(quantumConfigs)
+      .set({
+        ...configData,
+        updatedAt: new Date()
+      })
+      .where(eq(quantumConfigs.id, id))
+      .returning();
+    
+    return updatedConfig;
+  }
+  
+  async deleteQuantumConfig(id: number): Promise<boolean> {
+    const result = await db
+      .delete(quantumConfigs)
+      .where(eq(quantumConfigs.id, id));
+    
+    return !!result;
+  }
+  
+  // Network Connection Methods
+  async getNetworkConnections(organizationId: number, limit: number = 50): Promise<NetworkConnection[]> {
+    const connections = await db
+      .select()
+      .from(networkConnections)
+      .where(eq(networkConnections.organizationId, organizationId))
+      .orderBy(desc(networkConnections.timestamp))
+      .limit(limit);
+    
+    return connections;
+  }
+  
+  async getAnomalousConnections(organizationId: number): Promise<NetworkConnection[]> {
+    const connections = await db
+      .select()
+      .from(networkConnections)
+      .where(
+        and(
+          eq(networkConnections.organizationId, organizationId),
+          eq(networkConnections.isAnomaly, true)
+        )
+      )
+      .orderBy(desc(networkConnections.timestamp));
+    
+    return connections;
+  }
+  
+  async createNetworkConnection(connectionData: InsertNetworkConnection): Promise<NetworkConnection> {
+    const [connection] = await db
+      .insert(networkConnections)
+      .values({
+        ...connectionData,
+        timestamp: new Date()
+      })
+      .returning();
+    
+    return connection;
+  }
+  
+  async createManyNetworkConnections(connectionsData: InsertNetworkConnection[]): Promise<NetworkConnection[]> {
+    const connections = await db
+      .insert(networkConnections)
+      .values(
+        connectionsData.map(conn => ({
+          ...conn,
+          timestamp: new Date()
+        }))
+      )
+      .returning();
+    
+    return connections;
+  }
+  
+  async deleteNetworkConnections(organizationId: number): Promise<boolean> {
+    const result = await db
+      .delete(networkConnections)
+      .where(eq(networkConnections.organizationId, organizationId));
+    
+    return !!result;
+  }
+  
+  // Analysis Results Methods
+  async getAnalysisResults(organizationId: number, limit: number = 10): Promise<AnalysisResult[]> {
+    const results = await db
+      .select()
+      .from(analysisResults)
+      .where(eq(analysisResults.organizationId, organizationId))
+      .orderBy(desc(analysisResults.timestamp))
+      .limit(limit);
+    
+    return results;
+  }
+  
+  async getAnalysisResult(id: number): Promise<AnalysisResult | undefined> {
+    const [result] = await db
+      .select()
+      .from(analysisResults)
+      .where(eq(analysisResults.id, id));
+    
+    return result;
+  }
+  
+  async createAnalysisResult(resultData: InsertAnalysisResult): Promise<AnalysisResult> {
+    const [result] = await db
+      .insert(analysisResults)
+      .values({
+        ...resultData,
+        timestamp: new Date()
+      })
+      .returning();
+    
+    return result;
   }
 }
