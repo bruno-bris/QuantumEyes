@@ -74,8 +74,8 @@ export function setupQuantumRoutes(app: Express) {
       // Mettre à jour le statut QML - indique que nous testons la connexion
       qmlStatus.ibm_connected = false;
       
-      // Initialiser la connexion avec le nouveau canal ibm_cloud
-      console.log("Test de connexion à IBM Quantum via le canal ibm_cloud...");
+      // Initialiser la connexion avec le canal ibm_quantum
+      console.log("Test de connexion à IBM Quantum via le canal ibm_quantum...");
       const initResult = await ibmService.initialize();
       
       if (!initResult.success) {

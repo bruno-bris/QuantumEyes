@@ -30,22 +30,34 @@ export class IBMQuantumService {
     error?: string;
   }> {
     try {
+      console.log(`Test de connexion à IBM Quantum via le canal ${this.channel}...`);
+      
       // Stocker le token pour une utilisation ultérieure
       this.accessToken = this.apiKey;
       
       // Utiliser Python/Qiskit pour initialiser la connexion
       const result = await this.runPythonScript(`
 import os
+import sys
 import json
+import traceback
 from qiskit_ibm_runtime import QiskitRuntimeService
 
+print("Initialisation du script Python pour IBM Quantum...", file=sys.stderr)
+print(f"Canal utilisé: ${this.channel}", file=sys.stderr)
+print(f"Instance utilisée: ibm-q/open/main", file=sys.stderr)
+print(f"Longueur de la clé API: {len('${this.apiKey}')}", file=sys.stderr)
+
 try:
+    print("Tentative de connexion à IBM Quantum...", file=sys.stderr)
     # Utiliser le canal et l'instance spécifiés avec le token API fourni
     service = QiskitRuntimeService(
         channel="${this.channel}",
         instance="ibm-q/open/main",
         token="${this.apiKey}"
     )
+    
+    print("Connexion réussie! Récupération des backends...", file=sys.stderr)
     
     # Récupérer des informations de base
     backends = []
@@ -56,8 +68,11 @@ try:
                 "status": "active" if backend.status().operational else "maintenance",
                 "is_simulator": backend.simulator
             })
+        print(f"Backends récupérés: {len(backends)}", file=sys.stderr)
     except Exception as e:
-        print(f"Erreur lors de la récupération des backends: {e}")
+        error_details = traceback.format_exc()
+        print(f"Erreur lors de la récupération des backends: {e}", file=sys.stderr)
+        print(error_details, file=sys.stderr)
         backends = [
             {"name": "simulator_statevector", "status": "active", "is_simulator": True},
             {"name": "ibmq_qasm_simulator", "status": "active", "is_simulator": True}
@@ -66,10 +81,15 @@ try:
     # Obtenir l'ID utilisateur si disponible
     user_id = "quantum_user"
     try:
-        instance = service.instances()[0] if service.instances() else None
+        instances = service.instances()
+        print(f"Instances disponibles: {len(instances) if instances else 0}", file=sys.stderr)
+        instance = instances[0] if instances else None
         user_id = instance.get('id', 'quantum_user') if instance else 'quantum_user'
+        print(f"ID utilisateur récupéré: {user_id}", file=sys.stderr)
     except Exception as e:
-        print(f"Erreur lors de la récupération de l'ID utilisateur: {e}")
+        error_details = traceback.format_exc()
+        print(f"Erreur lors de la récupération de l'ID utilisateur: {e}", file=sys.stderr)
+        print(error_details, file=sys.stderr)
     
     print(json.dumps({
         "success": True,
@@ -78,6 +98,9 @@ try:
         "connected": True
     }))
 except Exception as e:
+    error_details = traceback.format_exc()
+    print(f"Erreur fatale lors de la connexion: {e}", file=sys.stderr)
+    print(error_details, file=sys.stderr)
     print(json.dumps({
         "success": False,
         "error": str(e)
@@ -134,14 +157,36 @@ except Exception as e:
       
       pythonProcess.stderr.on('data', (data) => {
         errorData += data.toString();
+        console.log(`Python stderr: ${data.toString()}`);
       });
       
       pythonProcess.on('close', (code) => {
         if (code !== 0) {
-          return reject(new Error(`Erreur d'exécution Python (code ${code}): ${errorData}`));
+          console.log(`Python script exited with code ${code}`);
+          console.log(`Stderr: ${errorData}`);
+          
+          // Résultat de repli en cas d'erreur (format JSON valide)
+          return resolve(JSON.stringify({
+            success: false,
+            error: `Erreur d'exécution Python (code ${code}): ${errorData}`
+          }));
         }
         
-        resolve(result);
+        try {
+          // Vérifier que le résultat est du JSON valide
+          JSON.parse(result);
+          resolve(result);
+        } catch (error) {
+          console.log('Erreur de parsing JSON:', error);
+          console.log('Réponse brute:', result);
+          
+          // Résultat de repli en cas d'erreur de parsing
+          resolve(JSON.stringify({
+            success: false,
+            error: 'Erreur de format dans la réponse Python',
+            raw: result
+          }));
+        }
       });
     });
   }
