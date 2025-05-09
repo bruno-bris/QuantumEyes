@@ -8,6 +8,8 @@ import Dashboard from "@/pages/dashboard";
 import CyberAssessment from "@/pages/cyber-assessment";
 import Protection from "@/pages/protection";
 import Continuity from "@/pages/continuity";
+import Reports from "@/pages/reports";
+import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -18,6 +20,8 @@ function Router() {
         <Route path="/assessment" component={CyberAssessment} />
         <Route path="/protection" component={Protection} />
         <Route path="/continuity" component={Continuity} />
+        <Route path="/reports" component={Reports} />
+        <Route path="/settings" component={Settings} />
         <Route component={NotFound} />
       </Switch>
     </MainLayout>
