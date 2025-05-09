@@ -55,31 +55,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Security Metrics (avec contexte d'organisation)
-  app.get("/api/security-metrics", isAuthenticated, async (req: any, res) => {
+  // Temporairement accessible sans authentification pour le développement
+  app.get("/api/security-metrics", async (req: any, res) => {
     try {
-      // Par défaut, utiliser la première organisation de l'utilisateur
-      const userId = req.user.claims.sub;
-      const orgId = req.query.organizationId ? parseInt(req.query.organizationId as string) : null;
+      // En mode développement, utiliser l'ID d'organisation 1 par défaut si pas d'utilisateur connecté
+      let organizationId = 1;
       
-      let organizationId: number;
-      
-      if (orgId) {
-        // Vérifier l'accès à l'organisation demandée
-        const userOrgs = await storage.getUserOrganizations(userId);
-        const hasAccess = userOrgs.some(org => org.id === orgId);
+      // Si l'utilisateur est authentifié, utiliser son contexte d'organisation
+      if (req.user && req.user.claims) {
+        const userId = req.user.claims.sub;
+        const orgId = req.query.organizationId ? parseInt(req.query.organizationId as string) : null;
         
-        if (!hasAccess) {
-          return res.status(403).json({ message: "Access denied to this organization" });
+        if (orgId) {
+          // Vérifier l'accès à l'organisation demandée
+          const userOrgs = await storage.getUserOrganizations(userId);
+          const hasAccess = userOrgs.some(org => org.id === orgId);
+          
+          if (!hasAccess) {
+            return res.status(403).json({ message: "Access denied to this organization" });
+          }
+          
+          organizationId = orgId;
+        } else {
+          // Utiliser la première organisation de l'utilisateur
+          const userOrgs = await storage.getUserOrganizations(userId);
+          if (userOrgs.length > 0) {
+            organizationId = userOrgs[0].id;
+          }
         }
-        
-        organizationId = orgId;
-      } else {
-        // Utiliser la première organisation de l'utilisateur
-        const userOrgs = await storage.getUserOrganizations(userId);
-        if (userOrgs.length === 0) {
-          return res.status(404).json({ message: "No organizations found" });
-        }
-        organizationId = userOrgs[0].id;
       }
       
       const metrics = await storage.getSecurityMetrics(organizationId);
@@ -90,32 +93,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get cyber maturity data
-  app.get("/api/cyber-maturity", isAuthenticated, async (req: any, res) => {
+  // Get cyber maturity data - temporairement accessible sans authentification
+  app.get("/api/cyber-maturity", async (req: any, res) => {
     try {
-      // Par défaut, utiliser la première organisation de l'utilisateur
-      const userId = req.user.claims.sub;
-      const orgId = req.query.organizationId ? parseInt(req.query.organizationId as string) : null;
+      // En mode développement, utiliser l'ID d'organisation 1 par défaut si pas d'utilisateur connecté
+      let organizationId = 1;
       
-      let organizationId: number;
-      
-      if (orgId) {
-        // Vérifier l'accès à l'organisation demandée
-        const userOrgs = await storage.getUserOrganizations(userId);
-        const hasAccess = userOrgs.some(org => org.id === orgId);
+      // Si l'utilisateur est authentifié, utiliser son contexte d'organisation
+      if (req.user && req.user.claims) {
+        const userId = req.user.claims.sub;
+        const orgId = req.query.organizationId ? parseInt(req.query.organizationId as string) : null;
         
-        if (!hasAccess) {
-          return res.status(403).json({ message: "Access denied to this organization" });
+        if (orgId) {
+          // Vérifier l'accès à l'organisation demandée
+          const userOrgs = await storage.getUserOrganizations(userId);
+          const hasAccess = userOrgs.some(org => org.id === orgId);
+          
+          if (!hasAccess) {
+            return res.status(403).json({ message: "Access denied to this organization" });
+          }
+          
+          organizationId = orgId;
+        } else {
+          // Utiliser la première organisation de l'utilisateur
+          const userOrgs = await storage.getUserOrganizations(userId);
+          if (userOrgs.length > 0) {
+            organizationId = userOrgs[0].id;
+          }
         }
-        
-        organizationId = orgId;
-      } else {
-        // Utiliser la première organisation de l'utilisateur
-        const userOrgs = await storage.getUserOrganizations(userId);
-        if (userOrgs.length === 0) {
-          return res.status(404).json({ message: "No organizations found" });
-        }
-        organizationId = userOrgs[0].id;
       }
       
       const maturityData = await storage.getCyberMaturity(organizationId);
@@ -135,33 +140,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get recent threats
-  app.get("/api/threats/recent", isAuthenticated, async (req: any, res) => {
+  // Get recent threats - temporairement accessible sans authentification
+  app.get("/api/threats/recent", async (req: any, res) => {
     try {
-      // Par défaut, utiliser la première organisation de l'utilisateur
-      const userId = req.user.claims.sub;
-      const orgId = req.query.organizationId ? parseInt(req.query.organizationId as string) : null;
+      // En mode développement, utiliser l'ID d'organisation 1 par défaut si pas d'utilisateur connecté
+      let organizationId = 1;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 5;
       
-      let organizationId: number;
-      
-      if (orgId) {
-        // Vérifier l'accès à l'organisation demandée
-        const userOrgs = await storage.getUserOrganizations(userId);
-        const hasAccess = userOrgs.some(org => org.id === orgId);
+      // Si l'utilisateur est authentifié, utiliser son contexte d'organisation
+      if (req.user && req.user.claims) {
+        const userId = req.user.claims.sub;
+        const orgId = req.query.organizationId ? parseInt(req.query.organizationId as string) : null;
         
-        if (!hasAccess) {
-          return res.status(403).json({ message: "Access denied to this organization" });
+        if (orgId) {
+          // Vérifier l'accès à l'organisation demandée
+          const userOrgs = await storage.getUserOrganizations(userId);
+          const hasAccess = userOrgs.some(org => org.id === orgId);
+          
+          if (!hasAccess) {
+            return res.status(403).json({ message: "Access denied to this organization" });
+          }
+          
+          organizationId = orgId;
+        } else {
+          // Utiliser la première organisation de l'utilisateur
+          const userOrgs = await storage.getUserOrganizations(userId);
+          if (userOrgs.length > 0) {
+            organizationId = userOrgs[0].id;
+          }
         }
-        
-        organizationId = orgId;
-      } else {
-        // Utiliser la première organisation de l'utilisateur
-        const userOrgs = await storage.getUserOrganizations(userId);
-        if (userOrgs.length === 0) {
-          return res.status(404).json({ message: "No organizations found" });
-        }
-        organizationId = userOrgs[0].id;
       }
       
       const threats = await storage.getRecentThreats(organizationId, limit);
@@ -171,32 +178,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get network activity data
-  app.get("/api/network-activity", isAuthenticated, async (req: any, res) => {
+  // Get network activity data - temporairement accessible sans authentification
+  app.get("/api/network-activity", async (req: any, res) => {
     try {
-      // Par défaut, utiliser la première organisation de l'utilisateur
-      const userId = req.user.claims.sub;
-      const orgId = req.query.organizationId ? parseInt(req.query.organizationId as string) : null;
+      // En mode développement, utiliser l'ID d'organisation 1 par défaut si pas d'utilisateur connecté
+      let organizationId = 1;
       
-      let organizationId: number;
-      
-      if (orgId) {
-        // Vérifier l'accès à l'organisation demandée
-        const userOrgs = await storage.getUserOrganizations(userId);
-        const hasAccess = userOrgs.some(org => org.id === orgId);
+      // Si l'utilisateur est authentifié, utiliser son contexte d'organisation
+      if (req.user && req.user.claims) {
+        const userId = req.user.claims.sub;
+        const orgId = req.query.organizationId ? parseInt(req.query.organizationId as string) : null;
         
-        if (!hasAccess) {
-          return res.status(403).json({ message: "Access denied to this organization" });
+        if (orgId) {
+          // Vérifier l'accès à l'organisation demandée
+          const userOrgs = await storage.getUserOrganizations(userId);
+          const hasAccess = userOrgs.some(org => org.id === orgId);
+          
+          if (!hasAccess) {
+            return res.status(403).json({ message: "Access denied to this organization" });
+          }
+          
+          organizationId = orgId;
+        } else {
+          // Utiliser la première organisation de l'utilisateur
+          const userOrgs = await storage.getUserOrganizations(userId);
+          if (userOrgs.length > 0) {
+            organizationId = userOrgs[0].id;
+          }
         }
-        
-        organizationId = orgId;
-      } else {
-        // Utiliser la première organisation de l'utilisateur
-        const userOrgs = await storage.getUserOrganizations(userId);
-        if (userOrgs.length === 0) {
-          return res.status(404).json({ message: "No organizations found" });
-        }
-        organizationId = userOrgs[0].id;
       }
       
       const networkData = await storage.getNetworkActivity(organizationId);
@@ -206,8 +215,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get vulnerabilities
-  app.get("/api/vulnerabilities", isAuthenticated, async (req: any, res) => {
+  // Get vulnerabilities - temporairement accessible sans authentification
+  app.get("/api/vulnerabilities", async (req: any, res) => {
     try {
       // Par défaut, utiliser la première organisation de l'utilisateur
       const userId = req.user.claims.sub;
