@@ -1,24 +1,124 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { setupAuth, isAuthenticated } from "./replitAuth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // API routes for the QuantumEyes application
-  
-  // Get security metrics for dashboard
-  app.get("/api/security-metrics", async (req, res) => {
+  // Auth middleware
+  await setupAuth(app);
+
+  // Auth routes
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const metrics = await storage.getSecurityMetrics();
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Organizations
+  app.get('/api/organizations', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const organizations = await storage.getUserOrganizations(userId);
+      res.json({ organizations });
+    } catch (error) {
+      console.error("Error fetching organizations:", error);
+      res.status(500).json({ message: "Failed to fetch organizations" });
+    }
+  });
+
+  app.get('/api/organizations/:slug', isAuthenticated, async (req: any, res) => {
+    try {
+      const organization = await storage.getOrganizationBySlug(req.params.slug);
+      if (!organization) {
+        return res.status(404).json({ message: "Organization not found" });
+      }
+
+      // Vérifier si l'utilisateur a accès à cette organisation
+      const userId = req.user.claims.sub;
+      const userOrgs = await storage.getUserOrganizations(userId);
+      const hasAccess = userOrgs.some(org => org.id === organization.id);
+
+      if (!hasAccess) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      res.json({ organization });
+    } catch (error) {
+      console.error("Error fetching organization:", error);
+      res.status(500).json({ message: "Failed to fetch organization" });
+    }
+  });
+
+  // Security Metrics (avec contexte d'organisation)
+  app.get("/api/security-metrics", isAuthenticated, async (req: any, res) => {
+    try {
+      // Par défaut, utiliser la première organisation de l'utilisateur
+      const userId = req.user.claims.sub;
+      const orgId = req.query.organizationId ? parseInt(req.query.organizationId as string) : null;
+      
+      let organizationId: number;
+      
+      if (orgId) {
+        // Vérifier l'accès à l'organisation demandée
+        const userOrgs = await storage.getUserOrganizations(userId);
+        const hasAccess = userOrgs.some(org => org.id === orgId);
+        
+        if (!hasAccess) {
+          return res.status(403).json({ message: "Access denied to this organization" });
+        }
+        
+        organizationId = orgId;
+      } else {
+        // Utiliser la première organisation de l'utilisateur
+        const userOrgs = await storage.getUserOrganizations(userId);
+        if (userOrgs.length === 0) {
+          return res.status(404).json({ message: "No organizations found" });
+        }
+        organizationId = userOrgs[0].id;
+      }
+      
+      const metrics = await storage.getSecurityMetrics(organizationId);
       res.json({ metrics });
     } catch (error) {
-      res.status(500).json({ message: "Error fetching security metrics" });
+      console.error("Error fetching security metrics:", error);
+      res.status(500).json({ message: "Failed to fetch security metrics" });
     }
   });
 
   // Get cyber maturity data
-  app.get("/api/cyber-maturity", async (req, res) => {
+  app.get("/api/cyber-maturity", isAuthenticated, async (req: any, res) => {
     try {
-      const maturityData = await storage.getCyberMaturity();
+      // Par défaut, utiliser la première organisation de l'utilisateur
+      const userId = req.user.claims.sub;
+      const orgId = req.query.organizationId ? parseInt(req.query.organizationId as string) : null;
+      
+      let organizationId: number;
+      
+      if (orgId) {
+        // Vérifier l'accès à l'organisation demandée
+        const userOrgs = await storage.getUserOrganizations(userId);
+        const hasAccess = userOrgs.some(org => org.id === orgId);
+        
+        if (!hasAccess) {
+          return res.status(403).json({ message: "Access denied to this organization" });
+        }
+        
+        organizationId = orgId;
+      } else {
+        // Utiliser la première organisation de l'utilisateur
+        const userOrgs = await storage.getUserOrganizations(userId);
+        if (userOrgs.length === 0) {
+          return res.status(404).json({ message: "No organizations found" });
+        }
+        organizationId = userOrgs[0].id;
+      }
+      
+      const maturityData = await storage.getCyberMaturity(organizationId);
       res.json({
         categories: [
           { name: "Gouvernance", score: maturityData.governance, maxScore: 100 },
@@ -36,9 +136,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get recent threats
-  app.get("/api/threats/recent", async (req, res) => {
+  app.get("/api/threats/recent", isAuthenticated, async (req: any, res) => {
     try {
-      const threats = await storage.getRecentThreats();
+      // Par défaut, utiliser la première organisation de l'utilisateur
+      const userId = req.user.claims.sub;
+      const orgId = req.query.organizationId ? parseInt(req.query.organizationId as string) : null;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 5;
+      
+      let organizationId: number;
+      
+      if (orgId) {
+        // Vérifier l'accès à l'organisation demandée
+        const userOrgs = await storage.getUserOrganizations(userId);
+        const hasAccess = userOrgs.some(org => org.id === orgId);
+        
+        if (!hasAccess) {
+          return res.status(403).json({ message: "Access denied to this organization" });
+        }
+        
+        organizationId = orgId;
+      } else {
+        // Utiliser la première organisation de l'utilisateur
+        const userOrgs = await storage.getUserOrganizations(userId);
+        if (userOrgs.length === 0) {
+          return res.status(404).json({ message: "No organizations found" });
+        }
+        organizationId = userOrgs[0].id;
+      }
+      
+      const threats = await storage.getRecentThreats(organizationId, limit);
       res.json({ threats });
     } catch (error) {
       res.status(500).json({ message: "Error fetching recent threats" });
@@ -46,9 +172,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get network activity data
-  app.get("/api/network-activity", async (req, res) => {
+  app.get("/api/network-activity", isAuthenticated, async (req: any, res) => {
     try {
-      const networkData = await storage.getNetworkActivity();
+      // Par défaut, utiliser la première organisation de l'utilisateur
+      const userId = req.user.claims.sub;
+      const orgId = req.query.organizationId ? parseInt(req.query.organizationId as string) : null;
+      
+      let organizationId: number;
+      
+      if (orgId) {
+        // Vérifier l'accès à l'organisation demandée
+        const userOrgs = await storage.getUserOrganizations(userId);
+        const hasAccess = userOrgs.some(org => org.id === orgId);
+        
+        if (!hasAccess) {
+          return res.status(403).json({ message: "Access denied to this organization" });
+        }
+        
+        organizationId = orgId;
+      } else {
+        // Utiliser la première organisation de l'utilisateur
+        const userOrgs = await storage.getUserOrganizations(userId);
+        if (userOrgs.length === 0) {
+          return res.status(404).json({ message: "No organizations found" });
+        }
+        organizationId = userOrgs[0].id;
+      }
+      
+      const networkData = await storage.getNetworkActivity(organizationId);
       res.json({ metrics: networkData });
     } catch (error) {
       res.status(500).json({ message: "Error fetching network activity" });
@@ -56,9 +207,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get vulnerabilities
-  app.get("/api/vulnerabilities", async (req, res) => {
+  app.get("/api/vulnerabilities", isAuthenticated, async (req: any, res) => {
     try {
-      const vulnerabilities = await storage.getVulnerabilities();
+      // Par défaut, utiliser la première organisation de l'utilisateur
+      const userId = req.user.claims.sub;
+      const orgId = req.query.organizationId ? parseInt(req.query.organizationId as string) : null;
+      
+      let organizationId: number;
+      
+      if (orgId) {
+        // Vérifier l'accès à l'organisation demandée
+        const userOrgs = await storage.getUserOrganizations(userId);
+        const hasAccess = userOrgs.some(org => org.id === orgId);
+        
+        if (!hasAccess) {
+          return res.status(403).json({ message: "Access denied to this organization" });
+        }
+        
+        organizationId = orgId;
+      } else {
+        // Utiliser la première organisation de l'utilisateur
+        const userOrgs = await storage.getUserOrganizations(userId);
+        if (userOrgs.length === 0) {
+          return res.status(404).json({ message: "No organizations found" });
+        }
+        organizationId = userOrgs[0].id;
+      }
+      
+      const vulnerabilities = await storage.getVulnerabilities(organizationId);
       const { criticalVulns, highVulns, mediumVulns, lowVulns } = categorizeVulnerabilities(vulnerabilities);
       
       res.json({
@@ -74,22 +250,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ message: "Error fetching vulnerabilities" });
-    }
-  });
-
-  // Get currently logged in user
-  app.get("/api/user", async (req, res) => {
-    try {
-      // For prototype, return a mock user
-      res.json({
-        user: {
-          name: "Entreprise Client",
-          role: "Admin",
-          initials: "EC"
-        }
-      });
-    } catch (error) {
-      res.status(500).json({ message: "Error fetching user data" });
     }
   });
 

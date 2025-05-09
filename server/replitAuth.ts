@@ -63,6 +63,8 @@ async function upsertUser(
     firstName: claims["first_name"],
     lastName: claims["last_name"],
     profileImageUrl: claims["profile_image_url"],
+    createdAt: new Date(),
+    updatedAt: new Date()
   });
 }
 
