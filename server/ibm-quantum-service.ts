@@ -11,7 +11,7 @@ export class IBMQuantumService {
   private userId: string | undefined = undefined;
   private availableBackends: any[] = [];
   private isConnected: boolean = false;
-  private channel: string = 'ibm_quantum'; // Canal approprié selon les informations du token
+  private channel: string = 'ibm_cloud'; // Canal recommandé (ibm_quantum est obsolète et sera retiré le 1er juillet)
   private instance: string = 'ibm-q/open/main'; // Instance pour l'accès à IBM Quantum
   
   constructor(apiKey: string) {
@@ -83,8 +83,17 @@ try:
     try:
         instances = service.instances()
         print(f"Instances disponibles: {len(instances) if instances else 0}", file=sys.stderr)
-        instance = instances[0] if instances else None
-        user_id = instance.get('id', 'quantum_user') if instance else 'quantum_user'
+        # Gestion des instances qui peuvent être des objets ou des chaînes
+        if instances and len(instances) > 0:
+            instance = instances[0]
+            if isinstance(instance, dict):
+                user_id = instance.get('id', 'quantum_user')
+            elif hasattr(instance, 'get'):
+                user_id = instance.get('id', 'quantum_user')
+            else:
+                user_id = 'quantum_user_' + str(instance)
+        else:
+            user_id = 'quantum_user'
         print(f"ID utilisateur récupéré: {user_id}", file=sys.stderr)
     except Exception as e:
         error_details = traceback.format_exc()
