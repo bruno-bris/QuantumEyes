@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Info, Database, Server, Network, Settings, BarChart3, Bug, AlertTriangle, Lock } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Info, Database, Server, Network, Settings, BarChart3, Bug, AlertTriangle, Lock, PlayIcon, Download, Loader, GitBranch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,28 +31,303 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+
+// Type pour les réponses du serveur quantique
+interface QuantumServiceStatus {
+  status: string;
+  qubits: number;
+  feature_map: string;
+  ansatz: string;
+  shots: number;
+  model_type: string;
+  ibm_connected: boolean;
+}
+
+interface QuantumCircuitDemo {
+  status: string;
+  circuit_image_url: string;
+  histogram_image_url: string;
+  counts: { state: string; count: number }[];
+  num_qubits: number;
+  shots: number;
+}
+
+interface AnomaliesResult {
+  status: string;
+  graph_image_url: string;
+  circuit_image_url: string;
+  histogram_image_url: string;
+  metrics: {
+    nodes: number;
+    edges: number;
+    density: number;
+    avg_degree: number;
+    connected_components: number;
+    avg_clustering: number;
+  };
+  anomalies_detected: number;
+  anomalies: {
+    connection_id: number;
+    source_ip: string;
+    destination_ip: string;
+    protocol: string;
+    port: number;
+    anomaly_score: number;
+    anomaly_type: string;
+  }[];
+  execution_time: number;
+  connections_analyzed: number;
+  quantum_simulation: {
+    qubits: number;
+    shots: number;
+    feature_map: string;
+    ansatz: string;
+  };
+}
 
 export default function QuantumAnalysis() {
+  const { toast } = useToast();
   const [qmlEnabled, setQmlEnabled] = useState(true);
   const [simulationRunning, setSimulationRunning] = useState(false);
   const [detectionProgress, setDetectionProgress] = useState(0);
+  const [qmlStatus, setQmlStatus] = useState<QuantumServiceStatus | null>(null);
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [circuitDemo, setCircuitDemo] = useState<QuantumCircuitDemo | null>(null);
+  const [circuitLoading, setCircuitLoading] = useState(false);
+  const [anomaliesResult, setAnomaliesResult] = useState<AnomaliesResult | null>(null);
+  const [ibmConnected, setIbmConnected] = useState(false);
+
+  // Configuration params
+  const [numQubits, setNumQubits] = useState(4);
+  const [modelType, setModelType] = useState("qsvc");
+  const [featureMap, setFeatureMap] = useState("zz");
+  const [ansatzType, setAnsatzType] = useState("real");
+  const [reps, setReps] = useState(2);
+  const [optimizer, setOptimizer] = useState("cobyla");
+  const [backend, setBackend] = useState("simulator");
+  const [shots, setShots] = useState(1024);
   
-  // Simuler l'exécution du modèle QML
-  const runQMLSimulation = () => {
+  // Charger le statut du service quantum
+  useEffect(() => {
+    checkQuantumStatus();
+  }, []);
+  
+  // Vérifier le statut du service QML
+  const checkQuantumStatus = async () => {
+    setStatusLoading(true);
+    try {
+      const response = await fetch('/api/quantum/status');
+      const data = await response.json();
+      
+      if (data.status === "operational") {
+        setQmlStatus(data);
+        setIbmConnected(data.ibm_connected);
+        
+        // Mettre à jour les valeurs de configuration
+        setNumQubits(data.qubits);
+        setModelType(data.model_type);
+        setFeatureMap(data.feature_map);
+        setAnsatzType(data.ansatz);
+        setShots(data.shots);
+        
+        toast({
+          title: "Service QML disponible",
+          description: "Connexion au service quantum établie avec succès.",
+        });
+      } else {
+        toast({
+          title: "Service QML indisponible",
+          description: "Impossible de se connecter au service quantum.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Erreur lors de la vérification du statut quantum:", error);
+      toast({
+        title: "Erreur de connexion",
+        description: "Le serveur quantum n'est pas disponible. Démarrez quantum_server/run.py.",
+        variant: "destructive",
+      });
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+  
+  // Enregistrer la configuration
+  const saveConfiguration = async () => {
+    try {
+      const config = {
+        num_qubits: numQubits,
+        model_type: modelType,
+        feature_map: featureMap,
+        ansatz: ansatzType,
+        reps: reps,
+        optimizer: optimizer,
+        shots: shots,
+        backend: backend
+      };
+      
+      const response = await fetch('/api/quantum/configure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config)
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === "success") {
+        toast({
+          title: "Configuration enregistrée",
+          description: "Les paramètres du module QML ont été mis à jour.",
+        });
+        
+        // Rafraîchir le statut
+        checkQuantumStatus();
+      } else {
+        toast({
+          title: "Erreur de configuration",
+          description: data.message || "Échec de la mise à jour des paramètres.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Erreur lors de la configuration:", error);
+      toast({
+        title: "Erreur de connexion",
+        description: "Impossible de communiquer avec le serveur quantum.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Connecter à IBM Quantum
+  const connectToIBM = async () => {
+    try {
+      const response = await fetch('/api/quantum/ibm-connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}) // Le serveur utilisera la clé API stockée
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === "success") {
+        setIbmConnected(true);
+        toast({
+          title: "IBM Quantum connecté",
+          description: "Connexion réussie au service IBM Quantum.",
+        });
+        
+        // Rafraîchir le statut
+        checkQuantumStatus();
+      } else {
+        toast({
+          title: "Erreur de connexion IBM",
+          description: data.message || "Échec de la connexion à IBM Quantum.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Erreur lors de la connexion à IBM:", error);
+      toast({
+        title: "Erreur de connexion",
+        description: "Impossible de communiquer avec le serveur quantum.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Générer un circuit quantique de démonstration
+  const generateCircuitDemo = async () => {
+    setCircuitLoading(true);
+    try {
+      const response = await fetch('/api/quantum/circuit-demo');
+      const data = await response.json();
+      
+      if (data.status === "success") {
+        setCircuitDemo(data);
+      } else {
+        toast({
+          title: "Erreur de génération",
+          description: data.message || "Échec de la génération du circuit quantique.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Erreur lors de la génération du circuit:", error);
+      toast({
+        title: "Erreur de connexion",
+        description: "Impossible de communiquer avec le serveur quantum.",
+        variant: "destructive",
+      });
+    } finally {
+      setCircuitLoading(false);
+    }
+  };
+  
+  // Exécuter la détection d'anomalies
+  const runAnomalyDetection = async () => {
     setSimulationRunning(true);
     setDetectionProgress(0);
     
-    const interval = setInterval(() => {
+    const progressInterval = setInterval(() => {
       setDetectionProgress(prev => {
         const next = prev + 5;
-        if (next >= 100) {
-          clearInterval(interval);
-          setSimulationRunning(false);
-          return 100;
+        if (next >= 98) {
+          clearInterval(progressInterval);
+          return 98;
         }
         return next;
       });
     }, 200);
+    
+    try {
+      // Récupérer les données de démo
+      const demoDataResponse = await fetch('/api/quantum/demo-data');
+      const demoData = await demoDataResponse.json();
+      
+      if (demoData.status !== "success") {
+        throw new Error("Échec de récupération des données de démo");
+      }
+      
+      // Lancer la détection d'anomalies
+      const response = await fetch('/api/quantum/detect-anomalies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(demoData.data)
+      });
+      
+      const result = await response.json();
+      
+      if (result.status === "success") {
+        setAnomaliesResult(result);
+        toast({
+          title: "Détection terminée",
+          description: `${result.anomalies_detected} anomalies détectées dans ${result.connections_analyzed} connexions.`,
+        });
+      } else {
+        toast({
+          title: "Erreur de détection",
+          description: result.message || "Échec de la détection d'anomalies.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Erreur lors de la détection d'anomalies:", error);
+      toast({
+        title: "Erreur de connexion",
+        description: "Impossible de communiquer avec le serveur quantum.",
+        variant: "destructive",
+      });
+    } finally {
+      clearInterval(progressInterval);
+      setDetectionProgress(100);
+      setTimeout(() => {
+        setSimulationRunning(false);
+      }, 500);
+    }
   };
 
   return (
@@ -90,7 +365,13 @@ export default function QuantumAnalysis() {
             <div className="flex flex-col space-y-2">
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Système quantique</span>
-                <span className="text-sm font-medium text-green-600">Opérationnel</span>
+                {statusLoading ? (
+                  <Loader className="h-4 w-4 animate-spin text-muted-foreground" />
+                ) : (
+                  <span className="text-sm font-medium text-green-600">
+                    {qmlStatus ? "Opérationnel" : "Non disponible"}
+                  </span>
+                )}
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Version du modèle</span>
@@ -98,11 +379,13 @@ export default function QuantumAnalysis() {
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Qubits utilisés</span>
-                <span className="text-sm font-medium">4</span>
+                <span className="text-sm font-medium">{qmlStatus?.qubits || numQubits}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">État actuel</span>
-                <span className="text-sm font-medium text-blue-600">En attente</span>
+                <span className="text-sm text-muted-foreground">Connexion IBM</span>
+                <span className={`text-sm font-medium ${ibmConnected ? 'text-green-600' : 'text-amber-600'}`}>
+                  {ibmConnected ? "Connecté" : "Non connecté"}
+                </span>
               </div>
             </div>
           </CardContent>
@@ -353,8 +636,8 @@ export default function QuantumAnalysis() {
               </div>
             </CardContent>
             <CardFooter className="flex justify-end gap-2">
-              <Button variant="outline">Réinitialiser</Button>
-              <Button>Enregistrer les paramètres</Button>
+              <Button variant="outline" onClick={checkQuantumStatus}>Réinitialiser</Button>
+              <Button onClick={saveConfiguration}>Enregistrer les paramètres</Button>
             </CardFooter>
           </Card>
         </TabsContent>
