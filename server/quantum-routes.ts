@@ -569,10 +569,17 @@ export function setupQuantumRoutes(app: Express) {
         const states = Object.keys(quantumResults.counts);
         const randomState = states[Math.floor(Math.random() * states.length)];
         const counts = quantumResults.counts[randomState];
-        const totalShots = Object.values(quantumResults.counts).reduce((a: number, b: number) => a + b, 0);
+        
+        // Calculer le total des mesures
+        let totalShots = 0;
+        Object.values(quantumResults.counts).forEach((value) => {
+          if (typeof value === 'number') {
+            totalShots += value;
+          }
+        });
         
         // Utiliser la distribution pour influencer le score d'anomalie
-        anomalyScore = 0.7 + (0.3 * counts / totalShots);
+        anomalyScore = 0.7 + (0.3 * (counts as number) / Math.max(1, totalShots));
       } else {
         // Générer un score aléatoire élevé
         anomalyScore = (Math.random() * 0.13 + 0.85);
