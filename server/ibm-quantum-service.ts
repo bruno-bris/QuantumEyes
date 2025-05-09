@@ -11,7 +11,8 @@ export class IBMQuantumService {
   private userId: string | undefined = undefined;
   private availableBackends: any[] = [];
   private isConnected: boolean = false;
-  private channel: string = 'ibm_cloud'; // Nouveau canal par défaut
+  private channel: string = 'ibm_quantum'; // Canal approprié selon les informations du token
+  private instance: string = 'ibm-q/open/main'; // Instance pour l'accès à IBM Quantum
   
   constructor(apiKey: string) {
     // Utiliser la variable d'environnement si disponible, sinon utiliser la clé fournie
@@ -39,8 +40,12 @@ import json
 from qiskit_ibm_runtime import QiskitRuntimeService
 
 try:
-    # Utiliser le nouveau canal ibm_cloud et le token API fourni
-    service = QiskitRuntimeService(channel="${this.channel}", token="${this.apiKey}")
+    # Utiliser le canal et l'instance spécifiés avec le token API fourni
+    service = QiskitRuntimeService(
+        channel="${this.channel}",
+        instance="ibm-q/open/main",
+        token="${this.apiKey}"
+    )
     
     # Récupérer des informations de base
     backends = []
@@ -185,7 +190,11 @@ try:
     ibm_results = None
     try:
         # Se connecter au service IBM Quantum
-        service = QiskitRuntimeService(channel="${this.channel}", token="${this.apiKey}")
+        service = QiskitRuntimeService(
+            channel="${this.channel}",
+            instance="ibm-q/open/main", 
+            token="${this.apiKey}"
+        )
         
         # Obtenir le backend
         backend_name = "${backend}"
