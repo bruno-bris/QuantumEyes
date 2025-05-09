@@ -12,13 +12,13 @@ export type NetworkConnection = {
   destination_ip: string;
   protocol: string;
   destination_port: number;
-  packet_size?: number;
-  timestamp?: Date;
-  duration?: string;
-  organizationId?: number;
-  isAnomaly?: boolean;
-  anomalyScore?: string;
-  anomalyType?: string;
+  packet_size?: number | null;
+  timestamp?: Date | null;
+  duration?: string | null;
+  organizationId?: number | null;
+  isAnomaly?: boolean | null;
+  anomalyScore?: string | null;
+  anomalyType?: string | null;
 };
 
 // Protocoles possibles

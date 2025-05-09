@@ -88,8 +88,7 @@ export function startSimulation(config: Partial<typeof DEFAULT_CONFIG> = {}) {
         await performAnomalyDetection();
       }
       
-      // Mettre à jour les statistiques de réseau
-      await updateNetworkActivity();
+      // Note: Les statistiques réseau sont mises à jour automatiquement par le stockage
     } catch (error) {
       console.error('[Simulation] Error in batch generation:', error);
     }
@@ -211,11 +210,11 @@ async function performAnomalyDetection() {
     }
     
     // Récupérer les connexions marquées comme anormales
-    const anomalousConnections = connections.filter(conn => conn.is_anomalous);
+    const anomalousConnections = connections.filter(conn => conn.isAnomaly);
     
     // Générer un circuit quantique pour l'analyse d'anomalies (simulation)
     const qasm = ibmQuantumService.generateAnomalyDetectionCircuit(
-      connections.map(c => [c.port, c.source_ip, c.destination_ip]), 
+      connections.map(c => [c.destination_port, c.source_ip, c.destination_ip]), 
       qmlStatus.qubits, 
       qmlStatus.feature_map
     );
@@ -235,9 +234,9 @@ async function performAnomalyDetection() {
         source_ip: conn.source_ip,
         destination_ip: conn.destination_ip,
         protocol: conn.protocol,
-        port: conn.port,
-        anomaly_score: conn.anomaly_score?.toString() || "0.85",
-        anomaly_type: conn.anomaly_type || "unknown"
+        port: conn.destination_port,
+        anomaly_score: conn.anomalyScore || "0.85",
+        anomaly_type: conn.anomalyType || "unknown"
       })),
       execution_time: executionTime,
       connections_analyzed: connections.length,
