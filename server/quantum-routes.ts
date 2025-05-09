@@ -612,11 +612,15 @@ export function setupQuantumRoutes(app: Express) {
       
       // Stocker les connexions dans la base de données si elles ne sont pas déjà présentes
       if (!connections) {
-        const connectionsData = networkData.map((conn: any) => ({
-          ...conn,
-          organizationId,
-          timestamp: new Date()
-        }));
+        const connectionsData = networkData.map((conn: any) => {
+          // Supprimer l'ID pour éviter les conflits de clé primaire
+          const { id, ...connData } = conn;
+          return {
+            ...connData,
+            organizationId,
+            timestamp: new Date()
+          };
+        });
         
         await storage.createManyNetworkConnections(connectionsData);
       }
@@ -714,7 +718,7 @@ export function setupQuantumRoutes(app: Express) {
         description: `Analyse de ${networkData.length} connexions réseau avec algorithme QML`,
         type: "anomaly_detection",
         configId: configId || null,
-        executionTime,
+        executionTime: executionTime.toString(),
         anomaliesDetected: anomalies.length,
         totalConnections: networkData.length,
         results: {
