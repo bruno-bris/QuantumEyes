@@ -15,11 +15,12 @@ from datetime import datetime
 from typing import Dict, List, Any, Tuple, Optional, Union
 
 # Qiskit imports
-from qiskit import Aer, QuantumCircuit
-from qiskit.visualization import plot_histogram
+from qiskit import QuantumCircuit
+from qiskit.primitives import Sampler
 from qiskit_ibm_runtime import QiskitRuntimeService
-from qiskit.circuit.library import ZZFeatureMap, RealAmplitudes, PauliFeatureMap, IQPFeatureMap
-from qiskit.algorithms.optimizers import COBYLA, SPSA, ADAM
+from qiskit.circuit.library import ZZFeatureMap, RealAmplitudes, PauliFeatureMap
+# Adaptations pour les versions récentes de Qiskit
+from qiskit.visualization import plot_histogram
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 
@@ -36,7 +37,7 @@ class QuantumService:
     """Service pour l'intégration de QML dans QuantumEyes."""
     
     def __init__(self):
-        self.backend = Aer.get_backend('qasm_simulator')
+        self.sampler = Sampler()  # Use the new Sampler primitive
         self.num_qubits = 4
         self.api_token = None
         self.ibm_service = None
