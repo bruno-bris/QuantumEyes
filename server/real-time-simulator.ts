@@ -2,7 +2,7 @@
  * Service de simulation en temps réel
  * Génère des données de connexion réseau à intervalles réguliers
  */
-import { generateRandomConnections, generateNetworkGraphPython } from './network-data-generator';
+import { generateRandomConnections, generateNetworkGraphPython, NetworkConnection } from './network-data-generator';
 import { storage } from './storage';
 import { createIBMQuantumService } from './ibm-quantum-service';
 
@@ -74,7 +74,7 @@ export function startSimulation(config: Partial<typeof DEFAULT_CONFIG> = {}) {
       
       // Mettre à jour les compteurs
       connectionCount += connections.length;
-      anomalyCount += connections.filter(c => c.is_anomalous).length;
+      anomalyCount += connections.filter(c => c.isAnomaly).length;
       
       console.log(`[Simulation] Batch generated. Total: ${connectionCount} connections, ${anomalyCount} anomalies`);
       
@@ -184,8 +184,24 @@ async function updateNetworkGraph() {
       return;
     }
     
+    // Convertir les connexions pour le générateur de graphe
+    const typedConnections: NetworkConnection[] = connections.map(conn => ({
+      id: conn.id,
+      source_ip: conn.source_ip,
+      destination_ip: conn.destination_ip,
+      protocol: conn.protocol,
+      destination_port: conn.destination_port || 0, // Utiliser 0 comme port par défaut si null
+      packet_size: conn.packet_size,
+      timestamp: conn.timestamp,
+      duration: conn.duration,
+      organizationId: conn.organizationId,
+      isAnomaly: conn.isAnomaly,
+      anomalyScore: conn.anomalyScore,
+      anomalyType: conn.anomalyType
+    }));
+    
     // Générer le graphe avec Python
-    const graphResult = await generateNetworkGraphPython(connections);
+    const graphResult = await generateNetworkGraphPython(typedConnections);
     lastGraphResult = JSON.parse(graphResult);
     
     console.log('[Simulation] Network graph updated');
@@ -209,12 +225,28 @@ async function performAnomalyDetection() {
       return;
     }
     
+    // Convertir les connexions pour traitement
+    const typedConnections: NetworkConnection[] = connections.map(conn => ({
+      id: conn.id,
+      source_ip: conn.source_ip,
+      destination_ip: conn.destination_ip,
+      protocol: conn.protocol,
+      destination_port: conn.destination_port || 0, // Utiliser 0 comme port par défaut si null
+      packet_size: conn.packet_size,
+      timestamp: conn.timestamp,
+      duration: conn.duration,
+      organizationId: conn.organizationId,
+      isAnomaly: conn.isAnomaly,
+      anomalyScore: conn.anomalyScore,
+      anomalyType: conn.anomalyType
+    }));
+    
     // Récupérer les connexions marquées comme anormales
-    const anomalousConnections = connections.filter(conn => conn.isAnomaly);
+    const anomalousConnections = typedConnections.filter(conn => conn.isAnomaly);
     
     // Générer un circuit quantique pour l'analyse d'anomalies (simulation)
     const qasm = ibmQuantumService.generateAnomalyDetectionCircuit(
-      connections.map(c => [c.destination_port, c.source_ip, c.destination_ip]), 
+      typedConnections.map(c => [c.destination_port, c.source_ip, c.destination_ip]), 
       qmlStatus.qubits, 
       qmlStatus.feature_map
     );
