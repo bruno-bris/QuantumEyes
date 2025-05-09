@@ -1,8 +1,6 @@
-import axios from 'axios';
 import { spawn } from 'child_process';
 
-// Points de terminaison mis à jour pour l'API IBM Quantum - Nouvelle plateforme IBM Cloud Quantum
-const IBM_QUANTUM_API_ENDPOINT = 'https://api.quantum.ibm.com/v2'; // API REST IBM Quantum
+// Nous utilisons directement Qiskit et Python pour communiquer avec IBM Quantum
 
 /**
  * Service pour interagir avec IBM Quantum (compatible avec la nouvelle API ibm_cloud)

@@ -71,22 +71,55 @@ export function setupQuantumRoutes(app: Express) {
       // Créer une instance du service IBM Quantum
       const ibmService = createIBMQuantumService();
       
-      // Initialiser la connexion
+      // Mettre à jour le statut QML - indique que nous testons la connexion
+      qmlStatus.ibm_connected = false;
+      
+      // Initialiser la connexion avec le nouveau canal ibm_cloud
+      console.log("Test de connexion à IBM Quantum via le canal ibm_cloud...");
       const initResult = await ibmService.initialize();
       
       if (!initResult.success) {
-        return res.status(500).json({
-          status: "error",
-          message: "Échec de la connexion à IBM Quantum",
-          error: initResult.error
+        console.log(`Échec de la connexion à IBM Quantum: ${initResult.error}`);
+        // Utiliser la simulation locale même en cas d'échec
+        const qasm = ibmService.generateQASMCircuit(2);
+        const result = ibmService.simulateCircuitLocally(qasm, 1024);
+        
+        // Mise à jour du statut QML - simulateur local
+        qmlStatus.ibm_connected = false;
+        
+        // Retourner un succès partiel pour que l'application continue de fonctionner
+        return res.status(200).json({
+          status: "success",
+          note: "Simulateur local activé - IBM Quantum non disponible",
+          message: "Utilisation du simulateur local (IBM Quantum non disponible)",
+          isLocal: true,
+          backends: [
+            { name: "local_simulator", status: "active", description: "Simulateur local" }
+          ],
+          circuit: {
+            qasm: qasm,
+            results: result
+          }
         });
       }
+      
+      // Mise à jour du statut QML - connexion réussie
+      qmlStatus.ibm_connected = true;
+      
+      console.log("Connexion à IBM Quantum réussie");
       
       // Générer un circuit quantique simple
       const qasm = ibmService.generateQASMCircuit(2); // Circuit simple à 2 qubits
       
-      // Exécuter le circuit sur le simulateur
-      const result = await ibmService.executeQASMCircuit(qasm, 'ibmq_qasm_simulator', 1024);
+      // Exécuter le circuit sur le simulateur ou un backend disponible
+      console.log("Exécution d'un circuit quantique de test...");
+      
+      // Sélectionner un backend préféré ou utiliser un disponible
+      const backendName = initResult.backends && initResult.backends.length > 0 
+        ? initResult.backends.find(b => b.is_simulator)?.name || initResult.backends[0].name
+        : 'local_simulator';
+      
+      const result = await ibmService.executeQASMCircuit(qasm, backendName, 1024);
       
       return res.json({
         status: "success",
@@ -100,10 +133,29 @@ export function setupQuantumRoutes(app: Express) {
       });
     } catch (error: any) {
       console.error("Erreur lors du test d'IBM Quantum:", error);
-      return res.status(500).json({
-        status: "error",
-        message: "Erreur lors du test d'IBM Quantum",
-        error: error.message || "Erreur inconnue"
+      
+      // En cas d'erreur, retourner quand même des résultats simulés
+      const ibmService = createIBMQuantumService();
+      const qasm = ibmService.generateQASMCircuit(2);
+      
+      // Mise à jour du statut QML - simulateur local
+      qmlStatus.ibm_connected = false;
+      
+      // Simuler les résultats du circuit localement
+      const result = ibmService.simulateCircuitLocally(qasm, 1024);
+      
+      return res.status(200).json({
+        status: "success",
+        note: "Simulateur local activé - Erreur lors de la connexion à IBM Quantum",
+        message: "Utilisation du simulateur local",
+        isLocal: true,
+        backends: [
+          { name: "local_simulator", status: "active", description: "Simulateur local" }
+        ],
+        circuit: {
+          qasm: qasm,
+          results: result
+        }
       });
     }
   });
