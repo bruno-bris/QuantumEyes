@@ -2,7 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import axios from "axios";
+import { setupQuantumRoutes } from "./quantum-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -266,135 +266,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Quantum API routes - proxy to Python Quantum server
-  // API routes for the quantum analysis module
-  const QUANTUM_API_URL = "http://localhost:5001/api/quantum";
-
-  // Quantum status
-  app.get("/api/quantum/status", async (_req, res) => {
-    try {
-      const response = await axios.get(`${QUANTUM_API_URL}/status`);
-      res.json(response.data);
-    } catch (error) {
-      console.error("Error connecting to quantum server:", error);
-      res.status(503).json({
-        status: "error",
-        message: "Quantum server unavailable. Please start the quantum_server/run.py script."
-      });
-    }
-  });
-
-  // Configure quantum service
-  app.post("/api/quantum/configure", async (req, res) => {
-    try {
-      const response = await axios.post(`${QUANTUM_API_URL}/configure`, req.body);
-      res.json(response.data);
-    } catch (error) {
-      console.error("Error configuring quantum service:", error);
-      res.status(500).json({
-        status: "error",
-        message: "Failed to configure quantum service"
-      });
-    }
-  });
-
-  // Connect to IBM Quantum
-  app.post("/api/quantum/ibm-connect", async (req, res) => {
-    try {
-      // Utiliser la clé API stockée dans l'environnement si non fournie
-      if (!req.body.token && process.env.IBM_QUANTUM_API_KEY) {
-        req.body.token = process.env.IBM_QUANTUM_API_KEY;
-      }
-      
-      const response = await axios.post(`${QUANTUM_API_URL}/ibm-connect`, req.body);
-      res.json(response.data);
-    } catch (error) {
-      console.error("Error connecting to IBM Quantum:", error);
-      res.status(500).json({
-        status: "error",
-        message: "Failed to connect to IBM Quantum"
-      });
-    }
-  });
-
-  // Generate a demo quantum circuit
-  app.get("/api/quantum/circuit-demo", async (_req, res) => {
-    try {
-      const response = await axios.get(`${QUANTUM_API_URL}/circuit-demo`);
-      res.json(response.data);
-    } catch (error) {
-      console.error("Error generating quantum circuit:", error);
-      res.status(500).json({
-        status: "error",
-        message: "Failed to generate quantum circuit"
-      });
-    }
-  });
-
-  // Generate network graph
-  app.post("/api/quantum/network-graph", async (req, res) => {
-    try {
-      const response = await axios.post(`${QUANTUM_API_URL}/network-graph`, req.body);
-      res.json(response.data);
-    } catch (error) {
-      console.error("Error generating network graph:", error);
-      res.status(500).json({
-        status: "error",
-        message: "Failed to generate network graph"
-      });
-    }
-  });
-
-  // Detect anomalies
-  app.post("/api/quantum/detect-anomalies", async (req, res) => {
-    try {
-      const response = await axios.post(`${QUANTUM_API_URL}/detect-anomalies`, req.body);
-      res.json(response.data);
-    } catch (error) {
-      console.error("Error detecting anomalies:", error);
-      res.status(500).json({
-        status: "error",
-        message: "Failed to detect anomalies"
-      });
-    }
-  });
-
-  // Get demo data
-  app.get("/api/quantum/demo-data", async (req, res) => {
-    try {
-      const count = req.query.count || 50;
-      const response = await axios.get(`${QUANTUM_API_URL}/demo-data?count=${count}`);
-      res.json(response.data);
-    } catch (error) {
-      console.error("Error fetching demo data:", error);
-      res.status(500).json({
-        status: "error",
-        message: "Failed to fetch demo data"
-      });
-    }
-  });
-
-  // Proxy to static files from the quantum server
-  app.get("/static/:path", async (req, res) => {
-    try {
-      const path = req.params.path;
-      const response = await axios.get(`${QUANTUM_API_URL}/static/${path}`, {
-        responseType: 'stream'
-      });
-      
-      // Forward content type
-      res.set('Content-Type', response.headers['content-type']);
-      
-      // Pipe the response stream to our response
-      response.data.pipe(res);
-    } catch (error) {
-      console.error("Error fetching static file:", error);
-      res.status(404).json({
-        status: "error",
-        message: "Static file not found"
-      });
-    }
-  });
+  // Configuration des routes pour l'API Quantum
+  setupQuantumRoutes(app);
 
   // Create an HTTP server instance
   const httpServer = createServer(app);
