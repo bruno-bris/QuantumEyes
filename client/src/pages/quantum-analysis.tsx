@@ -1,0 +1,665 @@
+import { useState } from "react";
+import { Info, Database, Server, Network, Settings, BarChart3, Bug, AlertTriangle, Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+
+export default function QuantumAnalysis() {
+  const [qmlEnabled, setQmlEnabled] = useState(true);
+  const [simulationRunning, setSimulationRunning] = useState(false);
+  const [detectionProgress, setDetectionProgress] = useState(0);
+  
+  // Simuler l'exécution du modèle QML
+  const runQMLSimulation = () => {
+    setSimulationRunning(true);
+    setDetectionProgress(0);
+    
+    const interval = setInterval(() => {
+      setDetectionProgress(prev => {
+        const next = prev + 5;
+        if (next >= 100) {
+          clearInterval(interval);
+          setSimulationRunning(false);
+          return 100;
+        }
+        return next;
+      });
+    }, 200);
+  };
+
+  return (
+    <div className="container p-6 mx-auto">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold">Analyse Quantique</h1>
+          <p className="text-muted-foreground mt-1">
+            Module QML (Quantum Machine Learning) pour la détection avancée des menaces
+          </p>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Badge variant={qmlEnabled ? "default" : "outline"} className="bg-gradient-to-r from-indigo-500 to-purple-600">
+            Quantum Ready
+          </Badge>
+          <Switch 
+            id="qml-mode" 
+            checked={qmlEnabled} 
+            onCheckedChange={setQmlEnabled}
+          />
+          <Label htmlFor="qml-mode">Activer QML</Label>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-md font-medium">État du Système QML</CardTitle>
+              <Server className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col space-y-2">
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Système quantique</span>
+                <span className="text-sm font-medium text-green-600">Opérationnel</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Version du modèle</span>
+                <span className="text-sm font-medium">v2.4.1</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Qubits utilisés</span>
+                <span className="text-sm font-medium">4</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">État actuel</span>
+                <span className="text-sm font-medium text-blue-600">En attente</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-md font-medium">Détection par QML</CardTitle>
+              <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col space-y-2">
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Anomalies détectées</span>
+                <span className="text-sm font-medium text-amber-600">3</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Précision du modèle</span>
+                <span className="text-sm font-medium">96.4%</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Dernière exécution</span>
+                <span className="text-sm font-medium">Il y a 15 min</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Mode d'exécution</span>
+                <span className="text-sm font-medium">Simulation</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-md font-medium">Statut Quantique</CardTitle>
+              <Lock className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col space-y-2">
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Résistance quantique</span>
+                <span className="text-sm font-medium text-green-600">Activée</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Algorithme en cours</span>
+                <span className="text-sm font-medium">QSVC</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Cryptographie</span>
+                <span className="text-sm font-medium">Post-quantique</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">État des clés</span>
+                <span className="text-sm font-medium text-green-600">Sécurisées</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs defaultValue="configuration" className="mb-8">
+        <TabsList className="grid grid-cols-4 w-full">
+          <TabsTrigger value="configuration">Configuration</TabsTrigger>
+          <TabsTrigger value="detection">Détection</TabsTrigger>
+          <TabsTrigger value="training">Entraînement</TabsTrigger>
+          <TabsTrigger value="visualisation">Visualisation</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="configuration" className="mt-6 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configuration du Module QML</CardTitle>
+              <CardDescription>
+                Paramètres de configuration du module d'analyse quantique
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="model-type">Type de modèle QML</Label>
+                    <Select defaultValue="qsvc">
+                      <SelectTrigger id="model-type" className="mt-1">
+                        <SelectValue placeholder="Sélectionner un modèle" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="qsvc">QSVC (Quantum Support Vector Classifier)</SelectItem>
+                        <SelectItem value="qnn">QNN (Quantum Neural Network)</SelectItem>
+                        <SelectItem value="vqc">VQC (Variational Quantum Classifier)</SelectItem>
+                        <SelectItem value="qknn">QKNN (Quantum K-Nearest Neighbors)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Le modèle QSVC est optimisé pour la détection d'anomalies réseau
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="qubits">Nombre de qubits</Label>
+                    <div className="grid grid-cols-6 items-center gap-2 mt-1">
+                      <Input
+                        id="qubits"
+                        type="number"
+                        min={2}
+                        max={8}
+                        defaultValue={4}
+                        className="col-span-1"
+                      />
+                      <Slider
+                        defaultValue={[4]}
+                        max={8}
+                        min={2}
+                        step={1}
+                        className="col-span-5"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Plus de qubits = plus de précision mais temps de traitement augmenté
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="feature-map">Feature Map</Label>
+                    <Select defaultValue="zz">
+                      <SelectTrigger id="feature-map" className="mt-1">
+                        <SelectValue placeholder="Sélectionner un feature map" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="zz">ZZFeatureMap</SelectItem>
+                        <SelectItem value="pauli">PauliFeatureMap</SelectItem>
+                        <SelectItem value="amplitude">AmplitudeEmbedding</SelectItem>
+                        <SelectItem value="iqp">IQPFeatureMap</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="ansatz">Type d'Ansatz</Label>
+                    <Select defaultValue="real">
+                      <SelectTrigger id="ansatz" className="mt-1">
+                        <SelectValue placeholder="Sélectionner un ansatz" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="real">RealAmplitudes</SelectItem>
+                        <SelectItem value="efficient">EfficientSU2</SelectItem>
+                        <SelectItem value="two-local">TwoLocal</SelectItem>
+                        <SelectItem value="qaoa">QAOA</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="reps">Nombre de répétitions</Label>
+                    <div className="grid grid-cols-6 items-center gap-2 mt-1">
+                      <Input
+                        id="reps"
+                        type="number"
+                        min={1}
+                        max={5}
+                        defaultValue={2}
+                        className="col-span-1"
+                      />
+                      <Slider
+                        defaultValue={[2]}
+                        max={5}
+                        min={1}
+                        step={1}
+                        className="col-span-5"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Augmenter pour améliorer l'expressivité du circuit quantique
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="optimizer">Optimiseur</Label>
+                    <Select defaultValue="cobyla">
+                      <SelectTrigger id="optimizer" className="mt-1">
+                        <SelectValue placeholder="Sélectionner un optimiseur" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cobyla">COBYLA</SelectItem>
+                        <SelectItem value="spsa">SPSA</SelectItem>
+                        <SelectItem value="adam">ADAM</SelectItem>
+                        <SelectItem value="gradient">Gradient Descent</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+              
+              <div className="space-y-4">
+                <h3 className="text-md font-medium">Paramètres d'exécution</h3>
+                
+                <div className="flex flex-col md:flex-row gap-6">
+                  <div className="flex-1 space-y-4">
+                    <div>
+                      <Label htmlFor="backend">Backend quantique</Label>
+                      <RadioGroup defaultValue="simulator" className="mt-2">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="simulator" id="simulator" />
+                          <Label htmlFor="simulator">Simulateur quantique (local)</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="ibm" id="ibm" />
+                          <Label htmlFor="ibm">IBM Quantum (cloud)</Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 space-y-4">
+                    <div>
+                      <Label htmlFor="shots">Nombre de shots</Label>
+                      <div className="grid grid-cols-6 items-center gap-2 mt-1">
+                        <Input
+                          id="shots"
+                          type="number"
+                          min={100}
+                          max={8192}
+                          step={100}
+                          defaultValue={1024}
+                          className="col-span-2"
+                        />
+                        <Slider
+                          defaultValue={[1024]}
+                          max={8192}
+                          min={100}
+                          step={100}
+                          className="col-span-4"
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Nombre d'exécutions du circuit quantique
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-end gap-2">
+              <Button variant="outline">Réinitialiser</Button>
+              <Button>Enregistrer les paramètres</Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="detection" className="mt-6 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Détection d'Anomalies par QML</CardTitle>
+              <CardDescription>
+                Exécutez la détection d'anomalies réseau avec le modèle QML
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <Label htmlFor="data-source">Source de données</Label>
+                    <Select defaultValue="real-time">
+                      <SelectTrigger id="data-source" className="mt-1">
+                        <SelectValue placeholder="Sélectionner une source" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="real-time">Données en temps réel</SelectItem>
+                        <SelectItem value="historical">Données historiques</SelectItem>
+                        <SelectItem value="import">Importer des données</SelectItem>
+                        <SelectItem value="synthetic">Données synthétiques</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Données collectées au cours des dernières 24 heures
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="detection-mode">Mode de détection</Label>
+                    <Select defaultValue="graph">
+                      <SelectTrigger id="detection-mode" className="mt-1">
+                        <SelectValue placeholder="Sélectionner un mode" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="graph">Détection par graphe</SelectItem>
+                        <SelectItem value="traffic">Analyse de trafic</SelectItem>
+                        <SelectItem value="pattern">Reconnaissance de motifs</SelectItem>
+                        <SelectItem value="hybrid">Mode hybride</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="p-4 rounded-md bg-slate-50 dark:bg-slate-900">
+                  <h3 className="font-medium mb-2 flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-amber-500" />
+                    Types d'anomalies à détecter
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Switch id="port-scan" defaultChecked />
+                      <Label htmlFor="port-scan">Scan de ports</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Switch id="ddos" defaultChecked />
+                      <Label htmlFor="ddos">Attaques DDoS</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Switch id="data-exfil" defaultChecked />
+                      <Label htmlFor="data-exfil">Exfiltration de données</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Switch id="malware" defaultChecked />
+                      <Label htmlFor="malware">Communications de malware</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Switch id="lateral" defaultChecked />
+                      <Label htmlFor="lateral">Mouvements latéraux</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Switch id="unusual" defaultChecked />
+                      <Label htmlFor="unusual">Comportements inhabituels</Label>
+                    </div>
+                  </div>
+                </div>
+
+                {simulationRunning && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm">Progression de la détection</span>
+                      <span className="text-sm font-medium">{detectionProgress}%</span>
+                    </div>
+                    <Progress value={detectionProgress} className="h-2" />
+                    <p className="text-xs text-muted-foreground mt-1 text-center">
+                      {detectionProgress < 100 
+                        ? "Analyse en cours, veuillez patienter..." 
+                        : "Analyse complète. Consultez les résultats ci-dessous."}
+                    </p>
+                  </div>
+                )}
+
+                {detectionProgress === 100 && (
+                  <div className="p-4 border rounded-md bg-slate-50 dark:bg-slate-900 mt-4">
+                    <h3 className="font-medium mb-2">Résultats de l'analyse</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm">Anomalies détectées</span>
+                        <Badge variant="destructive">3</Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Trafic analysé</span>
+                        <span className="text-sm font-medium">1289 connexions</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Durée de l'analyse</span>
+                        <span className="text-sm font-medium">5.2 secondes</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Confiance moyenne</span>
+                        <span className="text-sm font-medium">93.7%</span>
+                      </div>
+                    </div>
+                    <Button variant="outline" className="w-full mt-4">
+                      Voir le rapport détaillé
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-end gap-2">
+              <Button variant="outline" disabled={simulationRunning}>Réinitialiser</Button>
+              <Button 
+                disabled={simulationRunning} 
+                onClick={runQMLSimulation}
+                className={detectionProgress === 100 ? "bg-green-600 hover:bg-green-700" : ""}
+              >
+                {detectionProgress === 100 ? "Analyse terminée" : "Lancer l'analyse QML"}
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="training" className="mt-6 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Entraînement du Modèle QML</CardTitle>
+              <CardDescription>
+                Configurez et lancez l'entraînement du modèle QML
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="training-data">Jeu de données d'entraînement</Label>
+                    <Select defaultValue="default">
+                      <SelectTrigger id="training-data" className="mt-1">
+                        <SelectValue placeholder="Sélectionner un jeu de données" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="default">Jeu de données par défaut</SelectItem>
+                        <SelectItem value="custom">Données personnalisées</SelectItem>
+                        <SelectItem value="historical">Données historiques</SelectItem>
+                        <SelectItem value="synthetic">Données synthétiques</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="train-split">Répartition entraînement/test</Label>
+                    <div className="grid grid-cols-6 items-center gap-2 mt-1">
+                      <Input
+                        id="train-split"
+                        type="number"
+                        min={50}
+                        max={90}
+                        step={5}
+                        defaultValue={70}
+                        className="col-span-1"
+                      />
+                      <Slider
+                        defaultValue={[70]}
+                        max={90}
+                        min={50}
+                        step={5}
+                        className="col-span-5"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Pourcentage de données utilisées pour l'entraînement
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="max-iter">Nombre maximal d'itérations</Label>
+                    <div className="grid grid-cols-6 items-center gap-2 mt-1">
+                      <Input
+                        id="max-iter"
+                        type="number"
+                        min={50}
+                        max={500}
+                        step={10}
+                        defaultValue={80}
+                        className="col-span-1"
+                      />
+                      <Slider
+                        defaultValue={[80]}
+                        max={500}
+                        min={50}
+                        step={10}
+                        className="col-span-5"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Options avancées</Label>
+                    <div className="space-y-2 mt-1">
+                      <div className="flex items-center space-x-2">
+                        <Switch id="callback" />
+                        <Label htmlFor="callback">Utiliser des callbacks d'entraînement</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Switch id="noise" />
+                        <Label htmlFor="noise">Simuler le bruit quantique</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Switch id="validation" defaultChecked />
+                        <Label htmlFor="validation">Validation croisée</Label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-md">
+                <div className="flex items-start gap-2">
+                  <Info className="h-5 w-5 text-blue-500 mt-0.5" />
+                  <div>
+                    <h3 className="font-medium mb-1">Estimation des ressources</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Avec la configuration actuelle, l'entraînement du modèle QML nécessitera environ:
+                    </p>
+                    <ul className="text-sm text-muted-foreground mt-2 space-y-1">
+                      <li>• 15-20 minutes de temps de calcul</li>
+                      <li>• ~1024 exécutions de circuits quantiques</li>
+                      <li>• 4 qubits par circuit</li>
+                      <li>• Consommation modérée de CPU/GPU</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-end gap-2">
+              <Button variant="outline">Annuler</Button>
+              <Button>Lancer l'entraînement</Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="visualisation" className="mt-6 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Visualisation Quantique</CardTitle>
+              <CardDescription>
+                Explorez visuellement les données et les circuits quantiques
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="p-6 border rounded-md bg-slate-50 dark:bg-slate-900 text-center">
+                <div className="flex items-center justify-center space-x-2 mb-4">
+                  <Bug className="h-6 w-6 text-muted-foreground" />
+                  <h3 className="text-xl font-medium">Visualisation du module QML</h3>
+                </div>
+                <p className="text-muted-foreground mb-6">
+                  La visualisation interactive des circuits quantiques et des graphes de réseau sera disponible dans la prochaine version.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="border p-4 rounded-md bg-white dark:bg-slate-800">
+                    <h4 className="font-medium mb-2">Circuit Quantique</h4>
+                    <div className="aspect-video bg-gray-200 dark:bg-gray-700 flex items-center justify-center rounded-md">
+                      <Network className="h-12 w-12 text-gray-400" />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Visualisation du circuit quantique utilisé pour l'encodage et le traitement
+                    </p>
+                  </div>
+                  <div className="border p-4 rounded-md bg-white dark:bg-slate-800">
+                    <h4 className="font-medium mb-2">Graphe de Réseau</h4>
+                    <div className="aspect-video bg-gray-200 dark:bg-gray-700 flex items-center justify-center rounded-md">
+                      <Database className="h-12 w-12 text-gray-400" />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Représentation graphique des connexions réseau analysées
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-end">
+              <Button variant="outline">Accéder au module de visualisation</Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

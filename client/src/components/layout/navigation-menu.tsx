@@ -36,6 +36,11 @@ export default function NavigationMenu() {
       icon: <Shield className="mr-3 h-5 w-5" />,
     },
     {
+      name: "Analyse Quantique",
+      path: "/quantum",
+      icon: <FileSymlink className="mr-3 h-5 w-5" />,
+    },
+    {
       name: "Continuité d'Activité",
       path: "/continuity",
       icon: <FileText className="mr-3 h-5 w-5" />,

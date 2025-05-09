@@ -1,0 +1,759 @@
+## Analyse du Projet QuantumEyes
+
+D'après le cahier des charges, QuantumEyes est une solution de cybersécurité NDR (Network Detection and Response) innovante qui vise à:
+- Intégrer des technologies d'IA et de Machine Learning Quantique (QML)
+- Offrir une solution souveraine hébergée en France
+- Être "quantum-ready" pour anticiper les futures capacités des ordinateurs quantiques
+- Utiliser le QML pour la détection d'anomalies réseau et l'anticipation des menaces
+
+Le développement du module QML sur Replit nécessitera une approche structurée pour intégrer les technologies quantiques dans le contexte de la cybersécurité.
+
+## Création du Module QML de Détection par Graphe sur Replit
+
+Voici comment nous allons procéder pour développer ce module:
+
+### 1. Configuration de l'Environnement sur Replit
+
+Commençons par créer un environnement de développement adapté sur Replit:
+
+```python
+# Configuration d'un Replit pour le module QML de QuantumEyes
+# 1. Créez un nouveau Repl en choisissant Python
+# 2. Installez les dépendances nécessaires
+```
+
+Voici le fichier `pyproject.toml` à ajouter à votre Replit pour gérer les dépendances:
+
+```toml
+[tool.poetry]
+name = "quantumeyes-qml-module"
+version = "0.1.0"
+description = "Module QML de détection par graphe pour QuantumEyes"
+authors = ["Votre Nom <votre.email@exemple.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+qiskit = "^0.44.1"
+qiskit-ibm-runtime = "^0.15.0"
+qiskit-machine-learning = "^0.6.1"
+networkx = "^3.1"
+matplotlib = "^3.7.2"
+numpy = "^1.24.3"
+pandas = "^2.0.3"
+scikit-learn = "^1.3.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.4.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+```
+
+### 2. Architecture du Module QML de Détection par Graphe
+
+Le module QML sera composé de plusieurs composants:
+
+1. **Prétraitement des données réseau** - Convertir les données réseau en graphes
+2. **Encodage quantique** - Encoder les graphes en circuits quantiques
+3. **Algorithme QML** - Utiliser un algorithme de QML pour la détection d'anomalies
+4. **Interprétation des résultats** - Traduire les résultats quantiques en alertes de sécurité
+
+Voici le code principal (`main.py`):
+
+```python
+"""
+QuantumEyes - Module QML de Détection par Graphe
+------------------------------------------------
+Ce module implémente un système de détection d'anomalies réseau basé sur
+le Machine Learning Quantique (QML) en utilisant des représentations par graphes.
+Il utilise la simulation de l'ordinateur quantique d'IBM via Qiskit.
+"""
+
+import os
+import numpy as np
+import networkx as nx
+import matplotlib.pyplot as plt
+from qiskit import Aer, QuantumCircuit
+from qiskit.visualization import plot_histogram
+from qiskit.circuit.library import ZZFeatureMap, RealAmplitudes
+from qiskit_machine_learning.algorithms import QSVC
+from qiskit.algorithms.optimizers import COBYLA
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+
+class QuantumEyesQML:
+    """Classe principale du module QML de détection par graphe pour QuantumEyes."""
+    
+    def __init__(self, num_qubits=4):
+        """
+        Initialise le module QML.
+        
+        Args:
+            num_qubits (int): Nombre de qubits à utiliser dans le circuit quantique.
+        """
+        self.num_qubits = num_qubits
+        self.backend = Aer.get_backend('qasm_simulator')
+        self.feature_map = None
+        self.ansatz = None
+        self.model = None
+        self.scaler = StandardScaler()
+        
+    def create_quantum_circuit(self):
+        """Crée les circuits quantiques pour l'encodage et le traitement des données."""
+        self.feature_map = ZZFeatureMap(feature_dimension=self.num_qubits, reps=2)
+        self.ansatz = RealAmplitudes(self.num_qubits, reps=2)
+        
+    def network_data_to_graph(self, network_data):
+        """
+        Convertit les données réseau en un graphe représentant les connexions.
+        
+        Args:
+            network_data (dict): Dictionnaire contenant les données réseau
+                                (IPs, ports, protocoles, etc.)
+        
+        Returns:
+            nx.Graph: Graphe représentant les connexions réseau
+        """
+        G = nx.Graph()
+        
+        # Exemple de construction de graphe à partir de données réseau
+        # Dans un environnement réel, cette fonction serait plus complexe
+        for conn in network_data:
+            src = conn.get('source_ip', '')
+            dst = conn.get('destination_ip', '')
+            proto = conn.get('protocol', '')
+            port = conn.get('destination_port', 0)
+            
+            # Ajouter des nœuds pour les IPs
+            if src not in G:
+                G.add_node(src, type='ip')
+            if dst not in G:
+                G.add_node(dst, type='ip')
+                
+            # Ajouter une arête entre les IPs avec attributs
+            G.add_edge(src, dst, protocol=proto, port=port)
+        
+        return G
+    
+    def extract_graph_features(self, G):
+        """
+        Extrait des caractéristiques du graphe pour l'apprentissage quantique.
+        
+        Args:
+            G (nx.Graph): Graphe à analyser
+            
+        Returns:
+            np.array: Vecteur de caractéristiques de taille num_qubits
+        """
+        # Extraire des métriques représentatives du graphe
+        features = []
+        
+        # 1. Densité du graphe
+        features.append(nx.density(G))
+        
+        # 2. Centralité moyenne
+        try:
+            centrality = nx.degree_centrality(G)
+            features.append(np.mean(list(centrality.values())))
+        except:
+            features.append(0)
+        
+        # 3. Nombre de composants connectés normalisé
+        try:
+            num_components = nx.number_connected_components(G)
+            features.append(num_components / len(G.nodes))
+        except:
+            features.append(0)
+        
+        # 4. Clustering coefficient moyen
+        try:
+            clustering = nx.average_clustering(G)
+            features.append(clustering)
+        except:
+            features.append(0)
+        
+        # Assurez-vous que le nombre de caractéristiques correspond à num_qubits
+        while len(features) < self.num_qubits:
+            features.append(0.0)
+        
+        # Prenez uniquement les premières num_qubits caractéristiques
+        features = features[:self.num_qubits]
+        
+        return np.array(features)
+    
+    def prepare_data_for_quantum(self, features):
+        """
+        Prépare les données pour l'encodage quantique.
+        
+        Args:
+            features (np.array): Caractéristiques extraites du graphe
+            
+        Returns:
+            np.array: Caractéristiques normalisées et préparées
+        """
+        # Normaliser les caractéristiques pour l'encodage quantique
+        features_reshaped = features.reshape(1, -1)
+        features_scaled = self.scaler.fit_transform(features_reshaped)
+        return features_scaled[0]
+    
+    def train_model(self, training_data, labels):
+        """
+        Entraîne le modèle QML avec des données étiquetées.
+        
+        Args:
+            training_data (np.array): Données d'entraînement
+            labels (np.array): Étiquettes (0 pour normal, 1 pour anomalie)
+        """
+        print("Entraînement du modèle QML...")
+        
+        # Préparer les données
+        X_train, X_test, y_train, y_test = train_test_split(
+            training_data, labels, test_size=0.3, random_state=42)
+        X_train_scaled = self.scaler.fit_transform(X_train)
+        X_test_scaled = self.scaler.transform(X_test)
+        
+        # Créer le circuit quantique s'il n'existe pas
+        if self.feature_map is None or self.ansatz is None:
+            self.create_quantum_circuit()
+        
+        # Initialiser et entraîner le modèle QSVC
+        self.model = QSVC(
+            feature_map=self.feature_map,
+            ansatz=self.ansatz,
+            optimizer=COBYLA(maxiter=80),
+            quantum_instance=self.backend
+        )
+        
+        # Entraîner le modèle
+        self.model.fit(X_train_scaled, y_train)
+        
+        # Évaluer le modèle
+        score = self.model.score(X_test_scaled, y_test)
+        print(f"Score du modèle QML: {score:.4f}")
+        
+        return score
+    
+    def detect_anomaly(self, network_data):
+        """
+        Détecte les anomalies dans les données réseau à l'aide du modèle QML.
+        
+        Args:
+            network_data (dict): Données réseau à analyser
+            
+        Returns:
+            tuple: (est_anomalie, score_de_confiance)
+        """
+        # Convertir les données réseau en graphe
+        G = self.network_data_to_graph(network_data)
+        
+        # Extraire les caractéristiques du graphe
+        features = self.extract_graph_features(G)
+        
+        # Préparer les données pour la prédiction quantique
+        prepared_features = self.prepare_data_for_quantum(features)
+        
+        # Prédire avec le modèle QML
+        if self.model is not None:
+            # Reshape pour la prédiction
+            prepared_features = prepared_features.reshape(1, -1)
+            prediction = self.model.predict(prepared_features)
+            confidence = self.model.predict_proba(prepared_features)
+            return bool(prediction[0]), confidence[0]
+        else:
+            raise ValueError("Le modèle QML n'a pas été entraîné. Appelez train_model() avant detect_anomaly().")
+    
+    def visualize_graph(self, G, title="Graphe de Réseau"):
+        """
+        Visualise un graphe réseau.
+        
+        Args:
+            G (nx.Graph): Graphe à visualiser
+            title (str): Titre du graphe
+        """
+        plt.figure(figsize=(10, 8))
+        pos = nx.spring_layout(G)
+        
+        # Dessiner les nœuds et les arêtes
+        nx.draw(G, pos, with_labels=True, node_color='skyblue', 
+                node_size=1500, edge_color='gray', arrows=True)
+        
+        # Ajouter un titre
+        plt.title(title)
+        plt.tight_layout()
+        
+        # Sauvegarder l'image
+        plt.savefig("network_graph.png")
+        plt.close()
+        
+    def demonstrate_quantum_circuit(self, features):
+        """
+        Démontre l'encodage et le traitement quantique sur un exemple.
+        
+        Args:
+            features (np.array): Caractéristiques à encoder
+            
+        Returns:
+            dict: Résultats de la mesure du circuit quantique
+        """
+        # Créer le circuit si nécessaire
+        if self.feature_map is None:
+            self.create_quantum_circuit()
+        
+        # Créer un circuit complet pour la démonstration
+        qc = QuantumCircuit(self.num_qubits)
+        
+        # Encoder les caractéristiques
+        circuit_with_data = self.feature_map.bind_parameters(features)
+        qc = qc.compose(circuit_with_data)
+        
+        # Ajouter l'ansatz
+        qc = qc.compose(self.ansatz)
+        
+        # Mesurer tous les qubits
+        qc.measure_all()
+        
+        # Simuler le circuit
+        job = Aer.get_backend('qasm_simulator').run(qc, shots=1024)
+        result = job.result()
+        counts = result.get_counts(qc)
+        
+        # Visualiser le circuit
+        qc.draw(output='mpl', filename='quantum_circuit.png')
+        
+        # Visualiser l'histogramme des résultats
+        plot_histogram(counts, filename='histogram.png')
+        
+        return counts
+```
+
+### 3. Implémentation du Module de Génération de Données Synthétiques
+
+Pour tester notre module, nous aurons besoin de données synthétiques qui simulent le trafic réseau. Voici un fichier `data_generator.py`:
+
+```python
+"""
+Générateur de données synthétiques pour le module QML de QuantumEyes.
+Ce module génère des données réseau synthétiques pour tester et entraîner
+l'algorithme QML de détection d'anomalies.
+"""
+
+import random
+import numpy as np
+import networkx as nx
+from datetime import datetime, timedelta
+
+class NetworkDataGenerator:
+    """Générateur de données réseau synthétiques pour QuantumEyes."""
+    
+    def __init__(self):
+        """Initialise le générateur de données."""
+        # Liste d'IPs internes (fictives)
+        self.internal_ips = [f"192.168.1.{i}" for i in range(1, 31)]
+        
+        # Liste d'IPs externes (fictives)
+        self.external_ips = [
+            f"203.0.113.{i}" for i in range(1, 20)
+        ] + [
+            f"198.51.100.{i}" for i in range(1, 20)
+        ] + [
+            f"172.16.{i}.{j}" for i in range(1, 5) for j in range(1, 10)
+        ]
+        
+        # IPs malveillantes (fictives pour les anomalies)
+        self.malicious_ips = [
+            "185.143.223.12", "91.121.87.45", "45.95.168.112", 
+            "194.5.249.157", "194.36.191.35"
+        ]
+        
+        # Ports courants
+        self.common_ports = [80, 443, 22, 25, 53, 123, 389, 636, 3389]
+        
+        # Protocoles courants
+        self.protocols = ["TCP", "UDP", "ICMP", "HTTP", "HTTPS", "DNS", "NTP"]
+    
+    def generate_normal_traffic(self, num_connections=50):
+        """
+        Génère du trafic réseau normal.
+        
+        Args:
+            num_connections (int): Nombre de connexions à générer
+            
+        Returns:
+            list: Liste de dictionnaires représentant les connexions
+        """
+        connections = []
+        
+        for _ in range(num_connections):
+            # Pour le trafic normal, utiliser principalement les IPs internes
+            src_ip = random.choice(self.internal_ips)
+            
+            # 80% du trafic vers des IPs externes, 20% en interne
+            if random.random() < 0.8:
+                dst_ip = random.choice(self.external_ips)
+            else:
+                dst_ip = random.choice([ip for ip in self.internal_ips if ip != src_ip])
+            
+            # Sélectionner un port et un protocole courants
+            protocol = random.choice(self.protocols)
+            if protocol in ["HTTP", "HTTPS"]:
+                port = 80 if protocol == "HTTP" else 443
+            else:
+                port = random.choice(self.common_ports)
+            
+            # Générer un timestamp
+            timestamp = datetime.now() - timedelta(
+                minutes=random.randint(0, 60)
+            )
+            
+            # Générer une taille de paquet typique
+            packet_size = random.randint(64, 1500)
+            
+            connection = {
+                "source_ip": src_ip,
+                "destination_ip": dst_ip,
+                "protocol": protocol,
+                "source_port": random.randint(49152, 65535),  # Ports éphémères
+                "destination_port": port,
+                "timestamp": timestamp.isoformat(),
+                "packet_size": packet_size,
+                "is_anomaly": False
+            }
+            
+            connections.append(connection)
+        
+        return connections
+    
+    def generate_anomalous_traffic(self, num_connections=10, anomaly_type="port_scan"):
+        """
+        Génère du trafic réseau anormal/malveillant.
+        
+        Args:
+            num_connections (int): Nombre de connexions à générer
+            anomaly_type (str): Type d'anomalie à générer (port_scan, ddos, data_exfil)
+            
+        Returns:
+            list: Liste de dictionnaires représentant les connexions
+        """
+        connections = []
+        
+        if anomaly_type == "port_scan":
+            # Simulation d'un scan de ports
+            attacker_ip = random.choice(self.external_ips + self.malicious_ips)
+            target_ip = random.choice(self.internal_ips)
+            
+            # Scanner une série de ports consécutifs
+            start_port = random.randint(1, 1000)
+            
+            for i in range(num_connections):
+                port = start_port + i
+                
+                connection = {
+                    "source_ip": attacker_ip,
+                    "destination_ip": target_ip,
+                    "protocol": "TCP",
+                    "source_port": random.randint(49152, 65535),
+                    "destination_port": port,
+                    "timestamp": datetime.now().isoformat(),
+                    "packet_size": 64,  # Petits paquets typiques d'un scan
+                    "is_anomaly": True
+                }
+                
+                connections.append(connection)
+        
+        elif anomaly_type == "ddos":
+            # Simulation d'une attaque DDoS
+            target_ip = random.choice(self.internal_ips)
+            target_port = random.choice(self.common_ports)
+            
+            for _ in range(num_connections):
+                # Plusieurs IPs sources attaquent la même cible
+                attacker_ip = random.choice(self.external_ips + self.malicious_ips)
+                
+                connection = {
+                    "source_ip": attacker_ip,
+                    "destination_ip": target_ip,
+                    "protocol": random.choice(["TCP", "UDP", "ICMP"]),
+                    "source_port": random.randint(49152, 65535),
+                    "destination_port": target_port,
+                    "timestamp": datetime.now().isoformat(),
+                    "packet_size": random.randint(64, 1500),
+                    "is_anomaly": True
+                }
+                
+                connections.append(connection)
+        
+        elif anomaly_type == "data_exfil":
+            # Simulation d'exfiltration de données
+            internal_ip = random.choice(self.internal_ips)
+            external_ip = random.choice(self.malicious_ips)
+            
+            for _ in range(num_connections):
+                connection = {
+                    "source_ip": internal_ip,
+                    "destination_ip": external_ip,
+                    "protocol": random.choice(["HTTP", "HTTPS", "DNS"]),
+                    "source_port": random.randint(49152, 65535),
+                    "destination_port": 443 if random.random() < 0.7 else 53,
+                    "timestamp": datetime.now().isoformat(),
+                    "packet_size": random.randint(1000, 8000),  # Paquets plus grands
+                    "is_anomaly": True
+                }
+                
+                connections.append(connection)
+        
+        return connections
+    
+    def generate_mixed_dataset(self, normal_count=200, anomaly_count=50):
+        """
+        Génère un ensemble de données mixtes pour l'entraînement.
+        
+        Args:
+            normal_count (int): Nombre de connexions normales
+            anomaly_count (int): Nombre de connexions anormales
+            
+        Returns:
+            tuple: (données, étiquettes)
+        """
+        # Générer du trafic normal
+        normal_traffic = self.generate_normal_traffic(normal_count)
+        
+        # Générer différents types d'anomalies
+        anomaly_types = ["port_scan", "ddos", "data_exfil"]
+        anomalies = []
+        
+        for anomaly_type in anomaly_types:
+            count = anomaly_count // len(anomaly_types)
+            anomalies.extend(
+                self.generate_anomalous_traffic(count, anomaly_type)
+            )
+        
+        # Combiner et mélanger les données
+        all_data = normal_traffic + anomalies
+        random.shuffle(all_data)
+        
+        # Extraire les étiquettes
+        labels = [1 if conn["is_anomaly"] else 0 for conn in all_data]
+        
+        return all_data, labels
+    
+    def extract_features_for_classical_ml(self, connections):
+        """
+        Extrait des caractéristiques pour l'apprentissage machine classique.
+        Utile pour comparer les performances avec le QML.
+        
+        Args:
+            connections (list): Liste des connexions réseau
+            
+        Returns:
+            np.array: Matrice de caractéristiques
+        """
+        features = []
+        
+        # Regrouper les connexions par source_ip
+        connections_by_source = {}
+        for conn in connections:
+            src = conn["source_ip"]
+            if src not in connections_by_source:
+                connections_by_source[src] = []
+            connections_by_source[src].append(conn)
+        
+        # Pour chaque adresse IP source, extraire des statistiques
+        for src_ip, conns in connections_by_source.items():
+            # Nombre de destinations uniques
+            unique_dests = len(set(c["destination_ip"] for c in conns))
+            
+            # Nombre de ports uniques
+            unique_ports = len(set(c["destination_port"] for c in conns))
+            
+            # Taille moyenne des paquets
+            avg_packet_size = np.mean([c["packet_size"] for c in conns])
+            
+            # Ratio ports/connexions
+            port_conn_ratio = unique_ports / len(conns) if len(conns) > 0 else 0
+            
+            # Caractéristiques par source IP
+            feature_vector = [
+                len(conns),           # Nombre de connexions
+                unique_dests,         # Nombre de destinations uniques
+                unique_ports,         # Nombre de ports uniques
+                avg_packet_size,      # Taille moyenne des paquets
+                port_conn_ratio       # Ratio ports/connexions
+            ]
+            
+            features.append(feature_vector)
+        
+        return np.array(features)
+```
+
+### 4. Script de Démonstration
+
+Créons un script de démonstration (`demo.py`) qui montre comment utiliser le module QML:
+
+```python
+"""
+Script de démonstration du module QML de QuantumEyes.
+Ce script montre comment utiliser le module QML pour détecter des anomalies
+dans le trafic réseau en utilisant la simulation quantique d'IBM.
+"""
+
+import os
+import numpy as np
+from data_generator import NetworkDataGenerator
+from main import QuantumEyesQML
+import networkx as nx
+import matplotlib.pyplot as plt
+
+def main():
+    """Fonction principale de démonstration."""
+    print("-" * 80)
+    print("QuantumEyes - Démonstration du Module QML de Détection par Graphe")
+    print("-" * 80)
+    
+    # Créer le générateur de données
+    print("\n[1] Génération de données synthétiques...")
+    data_generator = NetworkDataGenerator()
+    
+    # Générer des données mixtes (normales et anormales)
+    connections, labels = data_generator.generate_mixed_dataset(normal_count=100, anomaly_count=30)
+    
+    print(f"Données générées: {len(connections)} connexions ({sum(labels)} anomalies)")
+    
+    # Initialiser le module QML
+    print("\n[2] Initialisation du module QML...")
+    qml_module = QuantumEyesQML(num_qubits=4)
+    
+    # Préparer les caractéristiques pour l'entraînement
+    print("\n[3] Préparation des données pour l'entraînement...")
+    
+    # Conversion des connexions en graphes, puis en caractéristiques
+    features = []
+    for i in range(0, len(connections), 10):  # Traiter par groupes de 10 connexions
+        batch = connections[i:i+10]
+        G = qml_module.network_data_to_graph(batch)
+        
+        # Si c'est le premier lot, visualiser le graphe
+        if i == 0:
+            title = "Graphe Normal" if labels[0] == 0 else "Graphe Anormal"
+            qml_module.visualize_graph(G, title=title)
+            print(f"Graphe visualisé et sauvegardé: network_graph.png")
+        
+        # Extraire les caractéristiques
+        graph_features = qml_module.extract_graph_features(G)
+        features.append(graph_features)
+    
+    # Convertir en array numpy
+    features = np.array(features)
+    
+    # Adapter les étiquettes pour correspondre au nombre de graphes
+    batch_labels = np.array([labels[i] for i in range(0, len(labels), 10) if i < len(labels)])
+    if len(batch_labels) > len(features):
+        batch_labels = batch_labels[:len(features)]
+    elif len(features) > len(batch_labels):
+        features = features[:len(batch_labels)]
+    
+    print(f"Caractéristiques extraites: {features.shape}")
+    
+    # Démontrer le circuit quantique
+    print("\n[4] Démonstration du circuit quantique...")
+    sample_features = features[0]
+    prepared_features = qml_module.prepare_data_for_quantum(sample_features)
+    counts = qml_module.demonstrate_quantum_circuit(prepared_features)
+    
+    print(f"Circuit quantique démontré et sauvegardé: quantum_circuit.png")
+    print(f"Histogramme des résultats sauvegardé: histogram.png")
+    
+    # Entraîner le modèle QML
+    print("\n[5] Entraînement du modèle QML...")
+    score = qml_module.train_model(features, batch_labels)
+    
+    # Tester la détection d'anomalies
+    print("\n[6] Test de détection d'anomalies...")
+    
+    # Générer un échantillon normal et un échantillon anormal
+    normal_sample = data_generator.generate_normal_traffic(num_connections=10)
+    anomaly_sample = data_generator.generate_anomalous_traffic(num_connections=10, anomaly_type="port_scan")
+    
+    # Tester la détection
+    try:
+        is_anomaly_normal, confidence_normal = qml_module.detect_anomaly(normal_sample)
+        print(f"Échantillon normal classifié comme anomalie: {is_anomaly_normal}")
+        print(f"Confiance: {confidence_normal}")
+        
+        is_anomaly_attack, confidence_attack = qml_module.detect_anomaly(anomaly_sample)
+        print(f"Échantillon d'attaque classifié comme anomalie: {is_anomaly_attack}")
+        print(f"Confiance: {confidence_attack}")
+        
+    except Exception as e:
+        print(f"Erreur lors de la détection: {e}")
+    
+    print("\n[7] Démonstration terminée!")
+    print("-" * 80)
+    print("Pour intégrer ce module dans QuantumEyes, utilisez l'API définie dans la classe QuantumEyesQML.")
+    print("-" * 80)
+
+if __name__ == "__main__":
+    main()
+```
+
+### 5. Documentation d'Utilisation et d'Intégration
+
+Enfin, créons un fichier README pour expliquer comment utiliser et intégrer ce module dans le projet QuantumEyes:
+
+```markdown
+# Module QML de Détection par Graphe pour QuantumEyes
+
+Ce module implémente un système de détection d'anomalies réseau basé sur le Machine Learning Quantique (QML) en utilisant des représentations par graphes. Il est conçu pour être intégré dans la plateforme QuantumEyes.
+
+## Fonctionnalités
+
+- Conversion de données réseau en représentations par graphes
+- Encodage de graphes en circuits quantiques
+- Détection d'anomalies réseau par QML
+- Visualisation des graphes réseau et des circuits quantiques
+- Comparaison avec des méthodes de ML classiques
+
+## Prérequis
+
+- Python 3.8+
+- Qiskit et ses modules (qiskit-ibm-runtime, qiskit-machine-learning)
+- NetworkX pour la manipulation de graphes
+- Autres dépendances (numpy, matplotlib, scikit-learn)
+
+## Installation
+
+1. Clonez ce dépôt sur Replit
+2. Les dépendances sont définies dans `pyproject.toml` et seront automatiquement installées
+
+## Utilisation
+
+Le module peut être utilisé de deux façons:
+
+### 1. Via le script de démonstration
+
+Exécutez `demo.py` pour voir une démonstration complète du module:
+
+```
+python demo.py
+```
+
+### 2. En important la classe QuantumEyesQML
+
+```python
+from main import QuantumEyesQML
+
+# Initialiser le module
+qml = QuantumEyesQML(num_qubits=4)
+
+# Entraîner le modèle avec des données étiquetées
+qml.train_model(features, labels)
+
+# Détecter les anomalies dans de nouvelles données
+is_anomaly, confidence = qml.detect_anomaly(network_data)
+```
+
+## Intégration dans QuantumEyes
+
+Pour intégrer ce module dans la plateforme QuantumEyes:
+
+1. Importez la classe `QuantumEyesQML` dans votre module de détection
