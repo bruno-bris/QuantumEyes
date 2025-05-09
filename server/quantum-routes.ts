@@ -1,6 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { storage } from "./storage";
 import { createIBMQuantumService } from "./ibm-quantum-service";
+import { realTimeSimulator } from './real-time-simulator';
 
 /**
  * Module pour le service quantique - Intégration avec IBM Quantum
@@ -60,6 +61,122 @@ function generateSyntheticNetworkData(numConnections = 50) {
 }
 
 export function setupQuantumRoutes(app: Express) {
+  // Routes de simulation en temps réel
+  app.get("/api/simulation/status", (req: Request, res: Response) => {
+    try {
+      const status = realTimeSimulator.status();
+      res.json(status);
+    } catch (error) {
+      console.error("Erreur lors de la récupération du statut de la simulation:", error);
+      res.status(500).json({
+        status: "error",
+        message: "Erreur lors de la récupération du statut de la simulation"
+      });
+    }
+  });
+  
+  app.post("/api/simulation/start", (req: Request, res: Response) => {
+    try {
+      const config = req.body || {};
+      const organizationId = parseInt(req.query.organizationId as string) || config.organizationId || 1;
+      
+      // Configurer les paramètres de la simulation
+      const simulationConfig = {
+        interval: config.interval || 5000, // 5 secondes par défaut
+        connectionsPerBatch: config.connectionsPerBatch || 10, // 10 connexions par lot
+        anomalyRate: config.anomalyRate || 0.05, // 5% d'anomalies par défaut
+        organizationId
+      };
+      
+      const result = realTimeSimulator.start(simulationConfig);
+      res.json({
+        status: "success",
+        message: "Simulation démarrée",
+        ...result
+      });
+    } catch (error) {
+      console.error("Erreur lors du démarrage de la simulation:", error);
+      res.status(500).json({
+        status: "error",
+        message: "Erreur lors du démarrage de la simulation"
+      });
+    }
+  });
+  
+  app.post("/api/simulation/stop", (req: Request, res: Response) => {
+    try {
+      const result = realTimeSimulator.stop();
+      res.json({
+        status: "success",
+        message: "Simulation arrêtée",
+        ...result
+      });
+    } catch (error) {
+      console.error("Erreur lors de l'arrêt de la simulation:", error);
+      res.status(500).json({
+        status: "error",
+        message: "Erreur lors de l'arrêt de la simulation"
+      });
+    }
+  });
+  
+  app.post("/api/simulation/reset", async (req: Request, res: Response) => {
+    try {
+      const result = await realTimeSimulator.reset();
+      res.json({
+        status: "success",
+        message: "Simulation réinitialisée",
+        ...result
+      });
+    } catch (error) {
+      console.error("Erreur lors de la réinitialisation de la simulation:", error);
+      res.status(500).json({
+        status: "error",
+        message: "Erreur lors de la réinitialisation de la simulation"
+      });
+    }
+  });
+  
+  // Routes d'analyse en temps réel
+  app.post("/api/simulation/update-graph", async (req: Request, res: Response) => {
+    try {
+      const organizationId = parseInt(req.query.organizationId as string) || 1;
+      // Forcer la mise à jour du graphe réseau
+      const result = await realTimeSimulator.updateNetworkGraph();
+      
+      res.json({
+        status: "success",
+        message: "Graphe réseau mis à jour",
+        data: result
+      });
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour du graphe réseau:", error);
+      res.status(500).json({
+        status: "error",
+        message: "Erreur lors de la mise à jour du graphe réseau"
+      });
+    }
+  });
+  
+  app.post("/api/simulation/analyze", async (req: Request, res: Response) => {
+    try {
+      const organizationId = parseInt(req.query.organizationId as string) || 1;
+      // Exécuter la détection d'anomalies
+      const result = await realTimeSimulator.performAnomalyDetection();
+      
+      res.json({
+        status: "success",
+        message: "Détection d'anomalies effectuée",
+        data: result
+      });
+    } catch (error) {
+      console.error("Erreur lors de l'analyse d'anomalies:", error);
+      res.status(500).json({
+        status: "error",
+        message: "Erreur lors de l'analyse d'anomalies"
+      });
+    }
+  });
   // Quantum status
   app.get("/api/quantum/status", (_req: Request, res: Response) => {
     res.json(qmlStatus);
