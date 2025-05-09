@@ -402,7 +402,9 @@ export default function QuantumAnalysis() {
             <div className="flex flex-col space-y-2">
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Anomalies détectées</span>
-                <span className="text-sm font-medium text-amber-600">3</span>
+                <span className="text-sm font-medium text-amber-600">
+                  {anomaliesResult ? anomaliesResult.anomalies_detected : '-'}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Précision du modèle</span>
@@ -410,11 +412,15 @@ export default function QuantumAnalysis() {
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Dernière exécution</span>
-                <span className="text-sm font-medium">Il y a 15 min</span>
+                <span className="text-sm font-medium">
+                  {detectionProgress === 100 ? 'À l\'instant' : 'Jamais'}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Mode d'exécution</span>
-                <span className="text-sm font-medium">Simulation</span>
+                <span className="text-sm font-medium">
+                  {backend === 'simulator' ? 'Simulation' : 'IBM Quantum'}
+                </span>
               </div>
             </div>
           </CardContent>
@@ -435,15 +441,23 @@ export default function QuantumAnalysis() {
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Algorithme en cours</span>
-                <span className="text-sm font-medium">QSVC</span>
+                <span className="text-sm font-medium">{qmlStatus?.model_type?.toUpperCase() || "QSVC"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Cryptographie</span>
-                <span className="text-sm font-medium">Post-quantique</span>
+                <span className="text-sm text-muted-foreground">Feature Map</span>
+                <span className="text-sm font-medium">{qmlStatus?.feature_map?.toUpperCase() || "ZZ"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">État des clés</span>
-                <span className="text-sm font-medium text-green-600">Sécurisées</span>
+                <span className="text-sm text-muted-foreground">API IBM Quantum</span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-6 text-xs"
+                  onClick={connectToIBM}
+                  disabled={ibmConnected}
+                >
+                  {ibmConnected ? "Connecté" : "Connecter"}
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -769,7 +783,7 @@ export default function QuantumAnalysis() {
               <Button variant="outline" disabled={simulationRunning}>Réinitialiser</Button>
               <Button 
                 disabled={simulationRunning} 
-                onClick={runQMLSimulation}
+                onClick={runAnomalyDetection}
                 className={detectionProgress === 100 ? "bg-green-600 hover:bg-green-700" : ""}
               >
                 {detectionProgress === 100 ? "Analyse terminée" : "Lancer l'analyse QML"}
