@@ -1,23 +1,26 @@
 import axios from 'axios';
+import { spawn } from 'child_process';
 
-// Points de terminaison mis à jour pour l'API IBM Quantum
-const IBM_QUANTUM_API_ENDPOINT = 'https://auth.quantum-computing.ibm.com/api'; // API IBM Quantum Authentication
+// Points de terminaison mis à jour pour l'API IBM Quantum - Nouvelle plateforme IBM Cloud Quantum
+const IBM_QUANTUM_API_ENDPOINT = 'https://api.quantum.ibm.com/v2'; // API REST IBM Quantum
 
 /**
- * Service pour interagir avec IBM Quantum
+ * Service pour interagir avec IBM Quantum (compatible avec la nouvelle API ibm_cloud)
  */
 export class IBMQuantumService {
   private apiKey: string;
   private accessToken: string | undefined = undefined;
   private userId: string | undefined = undefined;
   private availableBackends: any[] = [];
+  private isConnected: boolean = false;
+  private channel: string = 'ibm_cloud'; // Nouveau canal par défaut
   
   constructor(apiKey: string) {
     this.apiKey = apiKey;
   }
   
   /**
-   * Initialise la connexion avec IBM Quantum
+   * Initialise la connexion avec IBM Quantum via Python/Qiskit
    */
   async initialize(): Promise<{
     success: boolean;
@@ -26,22 +29,69 @@ export class IBMQuantumService {
     error?: string;
   }> {
     try {
-      // Obtenir un token d'accès - Utiliser directement la clé API comme token dans les en-têtes
+      // Stocker le token pour une utilisation ultérieure
       this.accessToken = this.apiKey;
       
-      // Vérifier si le token est valide en récupérant les informations utilisateur
-      const userResponse = await axios.get(`${IBM_QUANTUM_API_ENDPOINT}/me`, {
-        headers: {
-          'Authorization': `Bearer ${this.accessToken}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      // Utiliser Python/Qiskit pour initialiser la connexion
+      const result = await this.runPythonScript(`
+import os
+import json
+from qiskit_ibm_runtime import QiskitRuntimeService
+
+try:
+    # Utiliser le nouveau canal ibm_cloud et le token API fourni
+    service = QiskitRuntimeService(channel="${this.channel}", token="${this.apiKey}")
+    
+    # Récupérer des informations de base
+    backends = []
+    try:
+        for backend in service.backends():
+            backends.append({
+                "name": backend.name,
+                "status": "active" if backend.status().operational else "maintenance",
+                "is_simulator": backend.simulator
+            })
+    except Exception as e:
+        print(f"Erreur lors de la récupération des backends: {e}")
+        backends = [
+            {"name": "simulator_statevector", "status": "active", "is_simulator": True},
+            {"name": "ibmq_qasm_simulator", "status": "active", "is_simulator": True}
+        ]
+    
+    # Obtenir l'ID utilisateur si disponible
+    user_id = "quantum_user"
+    try:
+        instance = service.instances()[0] if service.instances() else None
+        user_id = instance.get('id', 'quantum_user') if instance else 'quantum_user'
+    except Exception as e:
+        print(f"Erreur lors de la récupération de l'ID utilisateur: {e}")
+    
+    print(json.dumps({
+        "success": True,
+        "user_id": user_id,
+        "backends": backends,
+        "connected": True
+    }))
+except Exception as e:
+    print(json.dumps({
+        "success": False,
+        "error": str(e)
+    }))
+      `);
       
-      // Stocker l'ID utilisateur s'il est disponible
-      this.userId = userResponse.data.id || undefined;
+      const data = JSON.parse(result);
       
-      // Obtenir la liste des backends disponibles
-      await this.getBackends();
+      if (!data.success) {
+        console.error('Échec de la connexion via Qiskit:', data.error);
+        return {
+          success: false,
+          error: data.error
+        };
+      }
+      
+      this.userId = data.user_id;
+      this.availableBackends = data.backends || [];
+      this.isConnected = data.connected;
       
       return {
         success: true,
@@ -49,154 +99,166 @@ export class IBMQuantumService {
         backends: this.availableBackends
       };
     } catch (error: any) {
-      console.error('Erreur lors de la connexion à IBM Quantum:', error.response?.data || error.message);
+      console.error('Erreur lors de la connexion à IBM Quantum:', error);
       return {
         success: false,
-        error: error.response?.data?.error?.message || error.message
+        error: typeof error === 'string' ? error : error.message
       };
     }
+  }
+  
+  /**
+   * Exécuter un script Python et retourner le résultat
+   */
+  private async runPythonScript(script: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const pythonProcess = spawn('python3', ['-c', script], {
+        env: {
+          ...process.env,
+          // Assurez-vous que la clé API est disponible dans l'environnement Python
+          IBM_QUANTUM_API_KEY: this.apiKey
+        }
+      });
+      
+      let result = '';
+      let errorData = '';
+      
+      pythonProcess.stdout.on('data', (data) => {
+        result += data.toString();
+      });
+      
+      pythonProcess.stderr.on('data', (data) => {
+        errorData += data.toString();
+      });
+      
+      pythonProcess.on('close', (code) => {
+        if (code !== 0) {
+          return reject(new Error(`Erreur d'exécution Python (code ${code}): ${errorData}`));
+        }
+        
+        resolve(result);
+      });
+    });
   }
   
   /**
    * Récupère la liste des backends disponibles
    */
   async getBackends(): Promise<any[]> {
-    if (!this.accessToken) {
-      throw new Error('Non authentifié. Appelez initialize() d\'abord');
+    if (!this.isConnected) {
+      await this.initialize();
     }
     
-    try {
-      // Utilisez une liste prédéfinie de backends car l'API a changé
-      this.availableBackends = [
-        { name: 'ibmq_qasm_simulator', status: 'active', description: 'Simulateur QASM IBM' },
-        { name: 'simulator_statevector', status: 'active', description: 'Simulateur de vecteur d\'état' },
-        { name: 'simulator_mps', status: 'active', description: 'Simulateur MPS' },
-        { name: 'simulator_extended_stabilizer', status: 'active', description: 'Simulateur à stabilisateur étendu' },
-        { name: 'simulator_stabilizer', status: 'active', description: 'Simulateur à stabilisateur' },
-        { name: 'ibm_brisbane', status: 'active', description: 'IBM Quantum System' },
-        { name: 'ibm_osaka', status: 'active', description: 'IBM Quantum System' },
-        { name: 'ibm_kyoto', status: 'active', description: 'IBM Quantum System' }
-      ];
-      
-      return this.availableBackends;
-    } catch (error: any) {
-      console.error('Erreur lors de la récupération des backends:', error.response?.data || error.message);
-      throw error;
-    }
+    return this.availableBackends;
   }
   
   /**
-   * Exécute un circuit quantique défini en QASM sur un backend
+   * Exécute un circuit quantique défini en QASM sur un backend via Python/Qiskit
    */
   async executeQASMCircuit(qasm: string, backend: string = 'ibmq_qasm_simulator', shots: number = 1024): Promise<any> {
-    if (!this.accessToken) {
-      throw new Error('Non authentifié. Appelez initialize() d\'abord');
+    if (!this.isConnected && !this.accessToken) {
+      await this.initialize();
     }
     
     try {
-      // Obtenir le hub, group, project
-      const hgp = await this.getHubGroupProject();
+      // Échapper les guillemets dans le QASM pour éviter les problèmes avec le script Python
+      const escapedQasm = qasm.replace(/"/g, '\\"');
       
-      if (!hgp) {
-        throw new Error('Impossible de déterminer le hub/group/project pour ce compte');
-      }
-      
-      // Format mis à jour pour la création d'une tâche
-      const jobData = {
-        backend: {
-          name: backend
-        },
-        qObject: {
-          qasm,
-          shots,
-          config: {
-            memory: true
-          }
+      // Utiliser Qiskit via Python pour exécuter le circuit
+      const result = await this.runPythonScript(`
+import os
+import json
+import time
+from qiskit import QuantumCircuit
+from qiskit.circuit import QuantumCircuit
+from qiskit_aer import AerSimulator
+from qiskit_ibm_runtime import QiskitRuntimeService, Sampler
+
+# QASM fourni par le service Node.js
+qasm_str = """${escapedQasm}"""
+
+try:
+    # Création du circuit à partir du QASM
+    circuit = QuantumCircuit.from_qasm_str(qasm_str)
+    
+    # Tenter d'exécuter sur IBM Quantum
+    ibm_results = None
+    try:
+        # Se connecter au service IBM Quantum
+        service = QiskitRuntimeService(channel="${this.channel}", token="${this.apiKey}")
+        
+        # Obtenir le backend
+        backend_name = "${backend}"
+        
+        # Vérifier si le backend est disponible
+        available_backends = [b.name for b in service.backends()]
+        if backend_name not in available_backends:
+            backend_name = "ibmq_qasm_simulator"  # Fallback au simulateur
+            if backend_name not in available_backends:
+                # Si même le simulateur n'est pas disponible, utiliser un backend disponible
+                backend_name = available_backends[0] if available_backends else None
+        
+        if backend_name:
+            # Utiliser le nouveau Sampler
+            sampler = Sampler(session=service.session(backend=backend_name))
+            job = sampler.run(circuits=[circuit], shots=${shots})
+            result = job.result()
+            
+            # Formater les résultats dans un format compatible avec l'ancien format
+            counts = {}
+            for quasi, count in result.quasi_dists[0].items():
+                # Convertir l'entier en chaîne binaire pour simuler le format de l'ancien API
+                binary = format(int(quasi), f'0{circuit.num_qubits}b')
+                counts[binary] = int(count * ${shots})
+            
+            ibm_results = {
+                "counts": counts,
+                "status": "COMPLETED",
+                "success": True,
+                "date": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                "backend_name": backend_name
+            }
+        else:
+            raise ValueError("Aucun backend disponible")
+    except Exception as e:
+        print(f"Erreur lors de l'exécution sur IBM Quantum: {e}")
+        # Aucune erreur n'est remontée ici, nous passerons à la simulation locale
+    
+    # Si nous n'avons pas pu exécuter sur IBM Quantum, simuler localement
+    if ibm_results is None:
+        # Créer un simulateur local
+        simulator = AerSimulator()
+        
+        # Exécuter le circuit
+        job = simulator.run(circuit, shots=${shots})
+        result = job.result()
+        
+        # Extraire les décomptes
+        counts = result.get_counts(circuit)
+        
+        ibm_results = {
+            "counts": counts,
+            "status": "COMPLETED",
+            "success": True,
+            "date": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "backend_name": "local_simulator"
         }
-      };
+    
+    print(json.dumps(ibm_results))
+except Exception as e:
+    print(json.dumps({
+        "success": False,
+        "error": str(e)
+    }))
+      `);
       
-      // Créer une tâche d'exécution
-      const response = await axios.post(
-        `${IBM_QUANTUM_API_ENDPOINT}/Providers/${hgp.hub}/Groups/${hgp.group}/Projects/${hgp.project}/Jobs`, 
-        jobData, 
-        {
-          headers: {
-            'Authorization': `Bearer ${this.accessToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      
-      const jobId = response.data.id;
-      
-      // Attendre que la tâche soit terminée
-      return await this.waitForJobResult(jobId, hgp);
+      return JSON.parse(result);
     } catch (error: any) {
-      console.error('Erreur lors de l\'exécution du circuit:', error.response?.data || error.message);
+      console.error('Erreur lors de l\'exécution du circuit:', error);
       
-      // Si nous ne pouvons pas exécuter sur l'ordinateur réel, utiliser un simulateur local
+      // Si nous ne pouvons pas exécuter via Python, utiliser notre simulateur local en JavaScript
       return this.simulateCircuitLocally(qasm, shots);
     }
-  }
-  
-  /**
-   * Récupérer les informations de hub/group/project
-   */
-  async getHubGroupProject(): Promise<{ hub: string; group: string; project: string } | null> {
-    try {
-      // Pour simplifier, utiliser les valeurs par défaut pour les comptes IBM Quantum
-      return {
-        hub: 'ibm-q',
-        group: 'open',
-        project: 'main'
-      };
-    } catch (error) {
-      console.error('Erreur lors de la récupération du hub/group/project:', error);
-      return null;
-    }
-  }
-  
-  /**
-   * Attendre que la tâche soit terminée
-   */
-  async waitForJobResult(
-    jobId: string, 
-    hgp: { hub: string; group: string; project: string },
-    maxRetries: number = 60, 
-    delay: number = 1000
-  ): Promise<any> {
-    if (!this.accessToken) {
-      throw new Error('Non authentifié. Appelez initialize() d\'abord');
-    }
-    
-    for (let i = 0; i < maxRetries; i++) {
-      try {
-        const response = await axios.get(
-          `${IBM_QUANTUM_API_ENDPOINT}/Providers/${hgp.hub}/Groups/${hgp.group}/Projects/${hgp.project}/Jobs/${jobId}`, 
-          {
-            headers: {
-              'Authorization': `Bearer ${this.accessToken}`
-            }
-          }
-        );
-        
-        const status = response.data.status;
-        
-        if (status === 'COMPLETED') {
-          return response.data.results;
-        } else if (status === 'ERROR' || status === 'FAILED') {
-          throw new Error(`La tâche a échoué avec le statut: ${status}`);
-        }
-        
-        // Attendre avant la prochaine vérification
-        await new Promise(resolve => setTimeout(resolve, delay));
-      } catch (error: any) {
-        console.error('Erreur lors de la récupération du résultat:', error.response?.data || error.message);
-        throw error;
-      }
-    }
-    
-    throw new Error('Délai d\'attente dépassé pour la tâche');
   }
   
   /**
