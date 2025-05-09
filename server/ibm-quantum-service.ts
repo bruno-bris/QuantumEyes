@@ -12,7 +12,7 @@ export class IBMQuantumService {
   private availableBackends: any[] = [];
   private isConnected: boolean = false;
   private channel: string = 'ibm_cloud'; // Canal recommandé (ibm_quantum est obsolète et sera retiré le 1er juillet)
-  private instance: string = 'ibm-q/open/main'; // Instance pour l'accès à IBM Quantum
+  private instance: string = 'crn:v1:bluemix:public:quantum-computing:us-east:a/f2e3ece8f3bb45bc9e5bbb3c586da57e:47b6d0be-d1c6-4cbe-b7a8-3834ca9ef04e::'; // Instance pour IBM Cloud
   
   constructor(apiKey: string) {
     // Utiliser la variable d'environnement si disponible, sinon utiliser la clé fournie
@@ -45,7 +45,7 @@ from qiskit_ibm_runtime import QiskitRuntimeService
 
 print("Initialisation du script Python pour IBM Quantum...", file=sys.stderr)
 print(f"Canal utilisé: ${this.channel}", file=sys.stderr)
-print(f"Instance utilisée: ibm-q/open/main", file=sys.stderr)
+print(f"Instance utilisée: ${this.instance}", file=sys.stderr)
 print(f"Longueur de la clé API: {len('${this.apiKey}')}", file=sys.stderr)
 
 try:
@@ -53,7 +53,6 @@ try:
     # Utiliser le canal et l'instance spécifiés avec le token API fourni
     service = QiskitRuntimeService(
         channel="${this.channel}",
-        instance="ibm-q/open/main",
         token="${this.apiKey}"
     )
     
@@ -246,7 +245,6 @@ try:
         # Se connecter au service IBM Quantum
         service = QiskitRuntimeService(
             channel="${this.channel}",
-            instance="ibm-q/open/main", 
             token="${this.apiKey}"
         )
         
