@@ -71,7 +71,7 @@ export default function NavigationMenu() {
       <div className="space-y-1">
         {navItems.map((item) => (
           <Link key={item.path} href={item.path}>
-            <a
+            <div
               className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg ${
                 isActive(item.path)
                   ? "bg-primary-50 text-primary-600"
@@ -80,7 +80,7 @@ export default function NavigationMenu() {
             >
               {item.icon}
               {item.name}
-            </a>
+            </div>
           </Link>
         ))}
       </div>
@@ -91,16 +91,27 @@ export default function NavigationMenu() {
         </h3>
         <div className="mt-2 space-y-1">
           {resourceItems.map((item) => (
-            <Link key={item.path} href={item.path}>
+            item.external ? (
               <a
+                key={item.path}
+                href={item.path}
                 className="flex items-center px-4 py-2 text-sm font-medium rounded-md text-neutral-700 hover:bg-neutral-100"
-                target={item.external ? "_blank" : undefined}
-                rel={item.external ? "noopener noreferrer" : undefined}
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 {item.icon}
                 {item.name}
               </a>
-            </Link>
+            ) : (
+              <Link key={item.path} href={item.path}>
+                <div
+                  className="flex items-center px-4 py-2 text-sm font-medium rounded-md text-neutral-700 hover:bg-neutral-100"
+                >
+                  {item.icon}
+                  {item.name}
+                </div>
+              </Link>
+            )
           ))}
         </div>
       </div>

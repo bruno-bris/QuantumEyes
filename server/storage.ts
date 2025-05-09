@@ -8,30 +8,39 @@ import {
 
 // Storage interface for QuantumEyes application
 export interface IStorage {
-  // User management
-  getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  // User management (Replit Auth)
+  getUser(id: string): Promise<User | undefined>;
+  upsertUser(user: User): Promise<User>;
+  
+  // Organizations
+  getOrganization(id: number): Promise<Organization | undefined>;
+  getOrganizationBySlug(slug: string): Promise<Organization | undefined>;
+  createOrganization(org: InsertOrganization): Promise<Organization>;
+  getUserOrganizations(userId: string): Promise<Organization[]>;
+  
+  // Organization users
+  addUserToOrganization(orgUser: InsertOrganizationUser): Promise<OrganizationUser>;
+  getUserRoleInOrganization(userId: string, orgId: number): Promise<string | undefined>;
   
   // Security metrics
-  getSecurityMetrics(): Promise<SecurityMetrics>;
+  getSecurityMetrics(organizationId: number): Promise<SecurityMetrics>;
   createSecurityMetrics(metrics: InsertSecurityMetrics): Promise<SecurityMetrics>;
   
   // Cyber maturity
-  getCyberMaturity(): Promise<CyberMaturity>;
+  getCyberMaturity(organizationId: number): Promise<CyberMaturity>;
   updateCyberMaturity(maturity: InsertCyberMaturity): Promise<CyberMaturity>;
   
   // Threat management
-  getRecentThreats(limit?: number): Promise<Threat[]>;
+  getRecentThreats(organizationId: number, limit?: number): Promise<Threat[]>;
   createThreat(threat: InsertThreat): Promise<Threat>;
   updateThreatStatus(id: number, status: string): Promise<Threat | undefined>;
   
   // Network activity
-  getNetworkActivity(): Promise<any>; // Returns network activity with traffic points
+  getNetworkActivity(organizationId: number): Promise<any>; // Returns network activity with traffic points
   recordNetworkActivity(activity: InsertNetworkActivity): Promise<NetworkActivity>;
   
   // Vulnerabilities
-  getVulnerabilities(): Promise<Vulnerability[]>;
+  getVulnerabilities(organizationId: number): Promise<Vulnerability[]>;
   createVulnerability(vulnerability: InsertVulnerability): Promise<Vulnerability>;
   updateVulnerabilityStatus(id: number, status: string): Promise<Vulnerability | undefined>;
 }
