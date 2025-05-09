@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Points de terminaison mis à jour pour l'API IBM Quantum
-const IBM_QUANTUM_API_ENDPOINT = 'https://api.quantum-computing.ibm.com/v2'; // Version 2 de l'API IBM Quantum
+const IBM_QUANTUM_API_ENDPOINT = 'https://auth.quantum-computing.ibm.com/api'; // API IBM Quantum Authentication
 
 /**
  * Service pour interagir avec IBM Quantum

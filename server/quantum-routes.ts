@@ -64,6 +64,49 @@ export function setupQuantumRoutes(app: Express) {
   app.get("/api/quantum/status", (_req: Request, res: Response) => {
     res.json(qmlStatus);
   });
+  
+  // Route de test pour IBM Quantum
+  app.get("/api/quantum/test-ibm-connection", async (_req: Request, res: Response) => {
+    try {
+      // Créer une instance du service IBM Quantum
+      const ibmService = createIBMQuantumService();
+      
+      // Initialiser la connexion
+      const initResult = await ibmService.initialize();
+      
+      if (!initResult.success) {
+        return res.status(500).json({
+          status: "error",
+          message: "Échec de la connexion à IBM Quantum",
+          error: initResult.error
+        });
+      }
+      
+      // Générer un circuit quantique simple
+      const qasm = ibmService.generateQASMCircuit(2); // Circuit simple à 2 qubits
+      
+      // Exécuter le circuit sur le simulateur
+      const result = await ibmService.executeQASMCircuit(qasm, 'ibmq_qasm_simulator', 1024);
+      
+      return res.json({
+        status: "success",
+        message: "Connexion à IBM Quantum réussie",
+        userId: initResult.userId,
+        backends: initResult.backends,
+        circuit: {
+          qasm: qasm,
+          results: result
+        }
+      });
+    } catch (error: any) {
+      console.error("Erreur lors du test d'IBM Quantum:", error);
+      return res.status(500).json({
+        status: "error",
+        message: "Erreur lors du test d'IBM Quantum",
+        error: error.message || "Erreur inconnue"
+      });
+    }
+  });
 
   // Get quantum configurations
   app.get("/api/quantum/configs", async (req: Request, res: Response) => {
