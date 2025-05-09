@@ -284,16 +284,14 @@ async function performAnomalyDetection() {
     // Sauvegarder le résultat dans la base de données
     await storage.createAnalysisResult({
       organizationId: simulationConfig.organizationId,
-      timestamp: new Date(),
-      connectionsAnalyzed: connections.length,
+      // Pas besoin de spécifier timestamp car il a une valeur par défaut dans le schéma
+      totalConnections: connections.length,
       anomaliesDetected: anomalousConnections.length,
-      executionTimeMs: parseFloat(executionTime) * 1000,
-      resultData: lastAnalysisResult,
-      quantum: false,
-      qubits: qmlStatus.qubits,
-      featureMap: qmlStatus.feature_map,
-      ansatz: qmlStatus.ansatz,
-      shots: qmlStatus.shots
+      executionTime: executionTime + "s",
+      results: lastAnalysisResult,
+      type: "anomaly_detection",
+      nodesAnalyzed: lastGraphResult?.metrics?.nodes || 0,
+      edgesAnalyzed: lastGraphResult?.metrics?.edges || 0
     });
     
     console.log(`[Simulation] Anomaly detection completed. Found ${anomalousConnections.length} anomalies out of ${connections.length} connections`);
