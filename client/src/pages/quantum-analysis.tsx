@@ -1068,14 +1068,16 @@ export default function QuantumAnalysis() {
                         min={50}
                         max={90}
                         step={5}
-                        defaultValue={70}
+                        value={trainSplit}
+                        onChange={(e) => setTrainSplit(Number(e.target.value))}
                         className="col-span-1"
                       />
                       <Slider
-                        defaultValue={[70]}
+                        value={[trainSplit]}
                         max={90}
                         min={50}
                         step={5}
+                        onValueChange={(value) => setTrainSplit(value[0])}
                         className="col-span-5"
                       />
                     </div>

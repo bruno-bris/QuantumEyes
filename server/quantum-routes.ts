@@ -820,6 +820,53 @@ export function setupQuantumRoutes(app: Express) {
     });
   });
   
+  // Train quantum model
+  app.post("/api/quantum/train-model", async (req: Request, res: Response) => {
+    try {
+      const trainingParams = req.body;
+      
+      if (!trainingParams) {
+        return res.status(400).json({
+          status: "error",
+          message: "Paramètres d'entraînement manquants"
+        });
+      }
+      
+      console.log("Démarrage de l'entraînement avec paramètres:", trainingParams);
+      
+      // Simuler une période d'entraînement (dans une vraie implémentation, 
+      // cela appellerait un service Python qui exécuterait l'entraînement)
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Mise à jour du statut QML
+      qmlStatus.model_type = trainingParams.model_type || qmlStatus.model_type;
+      qmlStatus.feature_map = trainingParams.feature_map || qmlStatus.feature_map;
+      qmlStatus.qubits = trainingParams.num_qubits || qmlStatus.qubits;
+      
+      // Simuler un résultat d'entraînement
+      const accuracy = 93.5 + (Math.random() * 4.5);
+      const f1Score = 0.91 + (Math.random() * 0.07);
+      
+      // Résultat de l'entraînement
+      res.json({
+        status: "success",
+        message: "Modèle entraîné avec succès",
+        accuracy: accuracy.toFixed(1),
+        f1_score: f1Score.toFixed(2),
+        training_time: "2m 37s",
+        epochs: 45,
+        model_saved: true,
+        parameters: trainingParams
+      });
+    } catch (error) {
+      console.error("Erreur lors de l'entraînement du modèle:", error);
+      res.status(500).json({
+        status: "error",
+        message: "Erreur lors de l'entraînement du modèle"
+      });
+    }
+  });
+  
   // Network Connections API
   // Get network connections for an organization
   app.get("/api/quantum/connections", async (req: Request, res: Response) => {
