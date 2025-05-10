@@ -13,7 +13,8 @@ import {
   Calendar,
   Info,
   HelpCircle,
-  Computer
+  Computer,
+  RefreshCw
 } from "lucide-react";
 import {
   Card,
@@ -543,7 +544,7 @@ export default function ReportDetail() {
                   Circuit utilisé pour l'analyse des anomalies
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex justify-center">
+              <CardContent className="flex flex-col items-center justify-center gap-4">
                 {content?.circuit_image_url ? (
                   <img 
                     src={content.circuit_image_url} 
@@ -555,6 +556,13 @@ export default function ReportDetail() {
                     <Network className="h-16 w-16 text-slate-400" />
                   </div>
                 )}
+                
+                <Link href="/quantum-visualizer">
+                  <Button variant="outline" size="sm" className="mt-2">
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Générer des circuits personnalisés
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
 
@@ -565,7 +573,7 @@ export default function ReportDetail() {
                   Distribution des mesures quantiques
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex justify-center">
+              <CardContent className="flex flex-col items-center justify-center gap-4">
                 {content?.histogram_image_url ? (
                   <img 
                     src={content.histogram_image_url} 
@@ -577,6 +585,13 @@ export default function ReportDetail() {
                     <Network className="h-16 w-16 text-slate-400" />
                   </div>
                 )}
+                
+                <Link href="/quantum-visualizer">
+                  <Button variant="outline" size="sm" className="mt-2">
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Explorer les histogrammes
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
 
