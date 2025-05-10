@@ -784,8 +784,8 @@ export default function QuantumAnalysis() {
                       className="w-full mt-4"
                       onClick={() => {
                         if (anomaliesResult) {
-                          // Créer un rapport basé sur les résultats d'analyse
-                          fetch('/api/reports', {
+                          // Créer un rapport basé sur les résultats d'analyse en utilisant la route non-authentifiée
+                          fetch('/api/quantum/create-report', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -816,7 +816,12 @@ export default function QuantumAnalysis() {
                               iconType: "shield"
                             })
                           })
-                          .then(response => response.json())
+                          .then(response => {
+                            if (!response.ok) {
+                              throw new Error(`Erreur HTTP: ${response.status}`);
+                            }
+                            return response.json();
+                          })
                           .then(data => {
                             if (data.report && data.report.id) {
                               toast({

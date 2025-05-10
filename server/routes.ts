@@ -357,26 +357,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/reports", async (req: any, res) => {
+  // Route spéciale pour la création de rapports pour l'analyse quantique
+  // Cette route ne nécessite pas d'authentification pour le développement
+  app.post("/api/quantum/create-report", async (req, res) => {
     try {
-      // Mode développement - permettre la création de rapport sans authentification
-      let organizationId = req.body.organizationId || 1;
+      // Par défaut, organisation 1 pour le développement
+      const organizationId = req.body.organizationId || 1;
       const { title, description, type, content, metrics, fileUrl, iconType } = req.body;
       
       if (!title || !type || !content) {
         return res.status(400).json({ message: "Missing required fields" });
       }
       
-      // Si l'utilisateur est authentifié
-      if (req.user && req.user.claims) {
-        const userId = req.user.claims.sub;
-        // Vérifier si l'utilisateur a accès à l'organisation
-        const userOrgs = await storage.getUserOrganizations(userId);
-        const hasAccess = userOrgs.some(org => org.id === organizationId);
-        
-        if (!hasAccess) {
-          return res.status(403).json({ message: "Access denied to this organization" });
-        }
+      const reportData = {
+        title,
+        description: description || '',
+        type,
+        content,
+        metrics: metrics || {},
+        organizationId,
+        fileUrl: fileUrl || null,
+        iconType: iconType || "file"
+      };
+      
+      const report = await storage.createReport(reportData);
+      res.status(201).json({ report });
+    } catch (error) {
+      console.error("Error creating quantum report:", error);
+      res.status(500).json({ message: "Error creating quantum report" });
+    }
+  });
+
+  // Route standard pour la création de rapports (protégée par authentification)
+  app.post("/api/reports", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { title, description, type, content, metrics, organizationId, fileUrl, iconType } = req.body;
+      
+      if (!title || !type || !content || !organizationId) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+      
+      // Vérifier si l'utilisateur a accès à l'organisation
+      const userOrgs = await storage.getUserOrganizations(userId);
+      const hasAccess = userOrgs.some(org => org.id === organizationId);
+      
+      if (!hasAccess) {
+        return res.status(403).json({ message: "Access denied to this organization" });
       }
       
       const reportData = {
