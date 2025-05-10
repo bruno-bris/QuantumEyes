@@ -1,6 +1,14 @@
 import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
 import { CircuitVisualizer } from "@/components/quantum/CircuitVisualizer";
+import { NetworkGraph } from "../components/charts/NetworkGraph";
+import { QuantumHistogram } from "../components/charts/QuantumHistogram";
+import { QuantumCircuitVisualizer } from "../components/charts/QuantumCircuitVisualizer";
+import { 
+  parseNetworkGraphData,
+  parseQuantumHistogramData,
+  parseQuantumCircuitData
+} from "../components/charts/ReportDataFormatter";
 import {
   ArrowLeft,
   Shield,
@@ -320,17 +328,13 @@ export default function ReportDetail() {
                 <CardDescription>Représentation graphique des connexions analysées</CardDescription>
               </CardHeader>
               <CardContent className="flex justify-center">
-                {content?.graph_image_url ? (
-                  <img 
-                    src={content.graph_image_url} 
-                    alt="Graphe réseau"
-                    className="max-w-full max-h-64 object-contain rounded-md border"
+                <div className="h-64 w-full">
+                  <NetworkGraph 
+                    {...parseNetworkGraphData(content)}
+                    anomalies={content?.anomalies} 
+                    height={250}
                   />
-                ) : (
-                  <div className="flex items-center justify-center h-64 w-full bg-slate-100 dark:bg-slate-800 rounded-md">
-                    <Network className="h-16 w-16 text-slate-400" />
-                  </div>
-                )}
+                </div>
               </CardContent>
               <CardFooter>
                 <div className="text-sm text-muted-foreground">
@@ -469,17 +473,13 @@ export default function ReportDetail() {
                 <CardDescription>Représentation visuelle des connexions</CardDescription>
               </CardHeader>
               <CardContent className="flex justify-center">
-                {content?.graph_image_url ? (
-                  <img 
-                    src={content.graph_image_url} 
-                    alt="Graphe réseau"
-                    className="max-w-full object-contain rounded-md border"
+                <div className="h-64 w-full">
+                  <NetworkGraph 
+                    {...parseNetworkGraphData(content)}
+                    anomalies={content?.anomalies} 
+                    height={250}
                   />
-                ) : (
-                  <div className="flex items-center justify-center h-64 w-full bg-slate-100 dark:bg-slate-800 rounded-md">
-                    <Network className="h-16 w-16 text-slate-400" />
-                  </div>
-                )}
+                </div>
               </CardContent>
             </Card>
 
@@ -545,17 +545,12 @@ export default function ReportDetail() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col items-center justify-center gap-4">
-                {content?.circuit_image_url ? (
-                  <img 
-                    src={content.circuit_image_url} 
-                    alt="Circuit quantique"
-                    className="max-w-full object-contain rounded-md border"
+                <div className="h-64 w-full">
+                  <QuantumCircuitVisualizer 
+                    circuit={parseQuantumCircuitData(content)}
+                    height={250}
                   />
-                ) : (
-                  <div className="flex items-center justify-center h-64 w-full bg-slate-100 dark:bg-slate-800 rounded-md">
-                    <Network className="h-16 w-16 text-slate-400" />
-                  </div>
-                )}
+                </div>
                 
                 <Link href="/quantum-visualizer">
                   <Button variant="outline" size="sm" className="mt-2">
@@ -574,17 +569,12 @@ export default function ReportDetail() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col items-center justify-center gap-4">
-                {content?.histogram_image_url ? (
-                  <img 
-                    src={content.histogram_image_url} 
-                    alt="Histogramme quantique"
-                    className="max-w-full object-contain rounded-md border"
+                <div className="h-64 w-full">
+                  <QuantumHistogram 
+                    data={parseQuantumHistogramData(content)}
+                    height={250}
                   />
-                ) : (
-                  <div className="flex items-center justify-center h-64 w-full bg-slate-100 dark:bg-slate-800 rounded-md">
-                    <Network className="h-16 w-16 text-slate-400" />
-                  </div>
-                )}
+                </div>
                 
                 <Link href="/quantum-visualizer">
                   <Button variant="outline" size="sm" className="mt-2">

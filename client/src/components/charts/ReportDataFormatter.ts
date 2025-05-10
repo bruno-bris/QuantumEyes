@@ -2,7 +2,7 @@
  * Fonctions utilitaires pour formater les données de rapport pour les visualisations
  */
 
-import { ReportContent, Anomaly } from "@/types/reports";
+import { ReportContent, Anomaly } from "../../types/reports";
 
 /**
  * Convertit des états quantiques (ex: "0000", "1111") en données d'histogramme pour Recharts
