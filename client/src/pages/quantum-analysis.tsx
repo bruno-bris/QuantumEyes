@@ -109,6 +109,13 @@ export default function QuantumAnalysis() {
   const [backend, setBackend] = useState("simulator");
   const [shots, setShots] = useState(1024);
   
+  // États pour l'entraînement
+  const [trainingInProgress, setTrainingInProgress] = useState(false);
+  const [trainingProgress, setTrainingProgress] = useState(0);
+  const [trainingError, setTrainingError] = useState<string | null>(null);
+  const [trainingDataset, setTrainingDataset] = useState("auto");
+  const [trainSplit, setTrainSplit] = useState(80);
+  
   // Charger le statut du service quantum
   useEffect(() => {
     checkQuantumStatus();
@@ -264,6 +271,87 @@ export default function QuantumAnalysis() {
       });
     } finally {
       setCircuitLoading(false);
+    }
+  };
+  
+  // Lancer l'entraînement du modèle QML
+  const startModelTraining = async () => {
+    // Si l'entraînement est déjà terminé, réinitialiser l'état
+    if (trainingProgress === 100) {
+      setTrainingProgress(0);
+      setTrainingError(null);
+      return;
+    }
+    
+    setTrainingInProgress(true);
+    setTrainingProgress(0);
+    setTrainingError(null);
+    
+    const progressInterval = setInterval(() => {
+      setTrainingProgress(prev => {
+        const next = prev + 2;
+        if (next >= 98) {
+          clearInterval(progressInterval);
+          return 98;
+        }
+        return next;
+      });
+    }, 300);
+    
+    try {
+      // Préparer les paramètres d'entraînement
+      const trainingParams = {
+        dataset: trainingDataset,
+        train_split: trainSplit / 100,
+        num_qubits: numQubits,
+        model_type: modelType,
+        feature_map: featureMap,
+        ansatz: ansatzType,
+        reps: reps,
+        optimizer: optimizer,
+        backend: backend,
+        shots: shots
+      };
+      
+      // Appeler l'API d'entraînement
+      const response = await fetch('/api/quantum/train-model', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(trainingParams)
+      });
+      
+      const result = await response.json();
+      
+      if (result.status === "success") {
+        toast({
+          title: "Entraînement terminé",
+          description: `Modèle entraîné avec succès. Précision: ${result.accuracy}%.`,
+        });
+        
+        // Rafraîchir le statut
+        checkQuantumStatus();
+      } else {
+        setTrainingError(result.message || "Échec de l'entraînement du modèle QML.");
+        toast({
+          title: "Erreur d'entraînement",
+          description: result.message || "Échec de l'entraînement du modèle QML.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Erreur lors de l'entraînement:", error);
+      setTrainingError("Impossible de communiquer avec le serveur quantum.");
+      toast({
+        title: "Erreur de connexion",
+        description: "Impossible de communiquer avec le serveur quantum.",
+        variant: "destructive",
+      });
+    } finally {
+      clearInterval(progressInterval);
+      setTrainingProgress(100);
+      setTimeout(() => {
+        setTrainingInProgress(false);
+      }, 500);
     }
   };
   
@@ -955,12 +1043,15 @@ export default function QuantumAnalysis() {
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="training-data">Jeu de données d'entraînement</Label>
-                    <Select defaultValue="default">
+                    <Select 
+                      defaultValue={trainingDataset}
+                      onValueChange={setTrainingDataset}
+                    >
                       <SelectTrigger id="training-data" className="mt-1">
                         <SelectValue placeholder="Sélectionner un jeu de données" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="default">Jeu de données par défaut</SelectItem>
+                        <SelectItem value="auto">Jeu de données par défaut</SelectItem>
                         <SelectItem value="custom">Données personnalisées</SelectItem>
                         <SelectItem value="historical">Données historiques</SelectItem>
                         <SelectItem value="synthetic">Données synthétiques</SelectItem>
@@ -1057,7 +1148,21 @@ export default function QuantumAnalysis() {
             </CardContent>
             <CardFooter className="flex justify-end gap-2">
               <Button variant="outline">Annuler</Button>
-              <Button>Lancer l'entraînement</Button>
+              <Button
+                onClick={startModelTraining}
+                disabled={trainingInProgress || !qmlStatus}
+              >
+                {trainingInProgress ? (
+                  <>
+                    <Loader className="mr-2 h-4 w-4 animate-spin" />
+                    Entraînement en cours ({trainingProgress}%)
+                  </>
+                ) : trainingProgress === 100 ? (
+                  "Réexécuter l'entraînement"
+                ) : (
+                  "Lancer l'entraînement"
+                )}
+              </Button>
             </CardFooter>
           </Card>
         </TabsContent>
