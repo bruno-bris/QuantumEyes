@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
+import { CircuitVisualizer } from "@/components/quantum/CircuitVisualizer";
 import {
   ArrowLeft,
   Shield,

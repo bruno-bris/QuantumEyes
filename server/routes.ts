@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { setupQuantumRoutes } from "./quantum-routes";
+import { setupQuantumVisualizationRoutes } from "./quantum-visualization-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -494,6 +495,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Configuration des routes pour l'API Quantum
   setupQuantumRoutes(app);
+  
+  // Configuration des routes pour la visualisation quantique
+  setupQuantumVisualizationRoutes(app);
 
   // Create an HTTP server instance
   const httpServer = createServer(app);
