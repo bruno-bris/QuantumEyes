@@ -272,6 +272,29 @@ export const insertAnalysisResultSchema = createInsertSchema(analysisResults).pi
   results: true,
 });
 
+// Rapports schema
+export const reports = pgTable("reports", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").notNull().references(() => organizations.id),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  type: text("type").notNull(), // compliance, threat, vulnerability, continuity
+  createdAt: timestamp("created_at").defaultNow(),
+  data: json("data").notNull(),
+  fileUrl: text("file_url"),
+  iconType: text("icon_type").default("shield"), // shield, building2, file-text 
+});
+
+export const insertReportSchema = createInsertSchema(reports).pick({
+  organizationId: true,
+  title: true,
+  description: true,
+  type: true,
+  data: true,
+  fileUrl: true,
+  iconType: true,
+});
+
 // Export types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -305,3 +328,6 @@ export type NetworkConnection = typeof networkConnections.$inferSelect;
 
 export type InsertAnalysisResult = z.infer<typeof insertAnalysisResultSchema>;
 export type AnalysisResult = typeof analysisResults.$inferSelect;
+
+export type InsertReport = z.infer<typeof insertReportSchema>;
+export type Report = typeof reports.$inferSelect;

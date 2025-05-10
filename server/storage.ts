@@ -3,10 +3,11 @@ import {
   type InsertOrganization, type InsertOrganizationUser,
   type CyberMaturity, type SecurityMetrics, type Threat,
   type NetworkActivity, type Vulnerability,
-  type QuantumConfig, type NetworkConnection, type AnalysisResult,
+  type QuantumConfig, type NetworkConnection, type AnalysisResult, type Report,
   type InsertThreat, type InsertNetworkActivity, type InsertVulnerability,
   type InsertCyberMaturity, type InsertSecurityMetrics,
-  type InsertQuantumConfig, type InsertNetworkConnection, type InsertAnalysisResult
+  type InsertQuantumConfig, type InsertNetworkConnection, type InsertAnalysisResult, 
+  type InsertReport
 } from "@shared/schema";
 
 import { DatabaseStorage } from "./storage-db";
@@ -67,6 +68,12 @@ export interface IStorage {
   getAnalysisResults(organizationId: number, limit?: number): Promise<AnalysisResult[]>;
   getAnalysisResult(id: number): Promise<AnalysisResult | undefined>;
   createAnalysisResult(result: InsertAnalysisResult): Promise<AnalysisResult>;
+  
+  // Reports
+  getReports(organizationId: number, type?: string): Promise<Report[]>;
+  getReport(id: number): Promise<Report | undefined>;
+  createReport(report: InsertReport): Promise<Report>;
+  deleteReport(id: number): Promise<boolean>;
 }
 
 // Utiliser l'implémentation de base de données 
