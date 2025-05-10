@@ -538,8 +538,11 @@ export default function QuantumAnalysis() {
                   </div>
 
                   <div>
-                    <Label htmlFor="feature-map">Feature Map</Label>
-                    <Select defaultValue="zz">
+                    <div className="flex justify-between">
+                      <Label htmlFor="feature-map">Feature Map</Label>
+                      <span className="font-medium bg-primary/10 px-2 py-0.5 rounded-md text-primary">{featureMap}</span>
+                    </div>
+                    <Select value={featureMap} onValueChange={setFeatureMap}>
                       <SelectTrigger id="feature-map" className="mt-1">
                         <SelectValue placeholder="Sélectionner un feature map" />
                       </SelectTrigger>
@@ -555,8 +558,11 @@ export default function QuantumAnalysis() {
 
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="ansatz">Type d'Ansatz</Label>
-                    <Select defaultValue="real">
+                    <div className="flex justify-between">
+                      <Label htmlFor="ansatz">Type d'Ansatz</Label>
+                      <span className="font-medium bg-primary/10 px-2 py-0.5 rounded-md text-primary">{ansatzType}</span>
+                    </div>
+                    <Select value={ansatzType} onValueChange={setAnsatzType}>
                       <SelectTrigger id="ansatz" className="mt-1">
                         <SelectValue placeholder="Sélectionner un ansatz" />
                       </SelectTrigger>
@@ -570,21 +576,26 @@ export default function QuantumAnalysis() {
                   </div>
 
                   <div>
-                    <Label htmlFor="reps">Nombre de répétitions</Label>
+                    <div className="flex justify-between">
+                      <Label htmlFor="reps">Nombre de répétitions</Label>
+                      <span className="font-medium bg-primary/10 px-2 py-0.5 rounded-md text-primary">{reps}</span>
+                    </div>
                     <div className="grid grid-cols-6 items-center gap-2 mt-1">
                       <Input
                         id="reps"
                         type="number"
                         min={1}
                         max={5}
-                        defaultValue={2}
+                        value={reps}
+                        onChange={(e) => setReps(parseInt(e.target.value) || 2)}
                         className="col-span-1"
                       />
                       <Slider
-                        defaultValue={[2]}
+                        value={[reps]}
                         max={5}
                         min={1}
                         step={1}
+                        onValueChange={(value) => setReps(value[0])}
                         className="col-span-5"
                       />
                     </div>
@@ -594,8 +605,11 @@ export default function QuantumAnalysis() {
                   </div>
 
                   <div>
-                    <Label htmlFor="optimizer">Optimiseur</Label>
-                    <Select defaultValue="cobyla">
+                    <div className="flex justify-between">
+                      <Label htmlFor="optimizer">Optimiseur</Label>
+                      <span className="font-medium bg-primary/10 px-2 py-0.5 rounded-md text-primary">{optimizer}</span>
+                    </div>
+                    <Select value={optimizer} onValueChange={setOptimizer}>
                       <SelectTrigger id="optimizer" className="mt-1">
                         <SelectValue placeholder="Sélectionner un optimiseur" />
                       </SelectTrigger>
@@ -618,8 +632,11 @@ export default function QuantumAnalysis() {
                 <div className="flex flex-col md:flex-row gap-6">
                   <div className="flex-1 space-y-4">
                     <div>
-                      <Label htmlFor="backend">Backend quantique</Label>
-                      <RadioGroup defaultValue="simulator" className="mt-2">
+                      <div className="flex justify-between">
+                        <Label htmlFor="backend">Backend quantique</Label>
+                        <span className="font-medium bg-primary/10 px-2 py-0.5 rounded-md text-primary">{backend}</span>
+                      </div>
+                      <RadioGroup value={backend} onValueChange={setBackend} className="mt-2">
                         <div className="flex items-center space-x-2">
                           <RadioGroupItem value="simulator" id="simulator" />
                           <Label htmlFor="simulator">Simulateur quantique (local)</Label>
@@ -634,7 +651,10 @@ export default function QuantumAnalysis() {
                   
                   <div className="flex-1 space-y-4">
                     <div>
-                      <Label htmlFor="shots">Nombre de shots</Label>
+                      <div className="flex justify-between">
+                        <Label htmlFor="shots">Nombre de shots</Label>
+                        <span className="font-medium bg-primary/10 px-2 py-0.5 rounded-md text-primary">{shots}</span>
+                      </div>
                       <div className="grid grid-cols-6 items-center gap-2 mt-1">
                         <Input
                           id="shots"
@@ -642,14 +662,16 @@ export default function QuantumAnalysis() {
                           min={100}
                           max={8192}
                           step={100}
-                          defaultValue={1024}
+                          value={shots}
+                          onChange={(e) => setShots(parseInt(e.target.value) || 1024)}
                           className="col-span-2"
                         />
                         <Slider
-                          defaultValue={[1024]}
+                          value={[shots]}
                           max={8192}
                           min={100}
                           step={100}
+                          onValueChange={(value) => setShots(value[0])}
                           className="col-span-4"
                         />
                       </div>
