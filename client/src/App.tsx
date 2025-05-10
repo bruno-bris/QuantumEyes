@@ -9,6 +9,7 @@ import CyberAssessment from "@/pages/cyber-assessment";
 import Protection from "@/pages/protection";
 import Continuity from "@/pages/continuity";
 import Reports from "@/pages/reports";
+import ReportDetail from "@/pages/report-detail";
 import Settings from "@/pages/settings";
 import QuantumAnalysis from "@/pages/quantum-analysis";
 import NotFound from "@/pages/not-found";
@@ -23,6 +24,7 @@ function Router() {
         <Route path="/continuity" component={Continuity} />
         <Route path="/quantum" component={QuantumAnalysis} />
         <Route path="/reports" component={Reports} />
+        <Route path="/report-detail/:id" component={ReportDetail} />
         <Route path="/settings" component={Settings} />
         <Route component={NotFound} />
       </Switch>

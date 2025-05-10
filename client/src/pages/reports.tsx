@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "wouter";
 import { 
   Download, 
   Calendar, 
@@ -220,10 +221,12 @@ function ReportCard({ report, icon }: ReportCardProps) {
         </div>
       </CardContent>
       <CardFooter>
-        <Button variant="outline" className="w-full flex items-center gap-2">
-          <Download className="h-4 w-4" />
-          Voir le rapport complet
-        </Button>
+        <Link href={`/report-detail/${report.id}`}>
+          <Button variant="outline" className="w-full flex items-center gap-2">
+            <Download className="h-4 w-4" />
+            Voir le rapport détaillé
+          </Button>
+        </Link>
       </CardFooter>
     </Card>
   );
