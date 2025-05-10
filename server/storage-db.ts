@@ -522,16 +522,23 @@ export class DatabaseStorage implements IStorage {
 
   // Reports Methods
   async getReports(organizationId: number, type?: string): Promise<Report[]> {
+    // Construire la requête de base
     let query = db
       .select()
       .from(reports)
       .where(eq(reports.organizationId, organizationId));
     
-    if (type) {
-      query = query.where(eq(reports.type, type));
-    }
-    
-    const reportsData = await query.orderBy(desc(reports.createdAt));
+    // Exécuter la requête avec ou sans filtre de type
+    const reportsData = type 
+      ? await db
+          .select()
+          .from(reports)
+          .where(and(
+            eq(reports.organizationId, organizationId),
+            eq(reports.type, type)
+          ))
+          .orderBy(desc(reports.createdAt))
+      : await query.orderBy(desc(reports.createdAt));
     
     if (reportsData.length === 0) {
       // Return a sample report for demo purposes

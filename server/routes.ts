@@ -298,7 +298,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const reports = await storage.getReports(organizationId, type);
-      res.json({ reports });
+      
+      // Traitement des rapports pour s'assurer que les métriques sont dans le bon format
+      const processedReports = reports.map(report => {
+        try {
+          // Si metrics est une chaîne, tentative de parsing
+          if (typeof report.metrics === 'string') {
+            report.metrics = JSON.parse(report.metrics);
+          }
+          return report;
+        } catch (e) {
+          // Si le parsing échoue, conserver les données telles quelles
+          return report;
+        }
+      });
+      
+      res.json({ reports: processedReports });
     } catch (error) {
       console.error("Error fetching reports:", error);
       res.status(500).json({ message: "Error fetching reports" });
@@ -324,6 +339,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!hasAccess) {
           return res.status(403).json({ message: "Access denied to this report" });
         }
+      }
+      
+      // Traiter les métriques si nécessaire
+      try {
+        if (report && typeof report.metrics === 'string') {
+          report.metrics = JSON.parse(report.metrics);
+        }
+      } catch (e) {
+        // Ignorer les erreurs de parsing
       }
       
       res.json({ report });
