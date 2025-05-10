@@ -172,7 +172,8 @@ export function CircuitVisualizer({ onImageGenerated }: CircuitVisualizerProps) 
           <div className="space-y-4">
             <div className="space-y-2">
               <div className="flex justify-between">
-                <Label htmlFor="qubits">Nombre de qubits: {params.qubits}</Label>
+                <Label htmlFor="qubits">Nombre de qubits</Label>
+                <span className="font-medium bg-primary/10 px-2 py-0.5 rounded-md text-primary">{params.qubits}</span>
               </div>
               <Slider 
                 id="qubits"
@@ -222,7 +223,8 @@ export function CircuitVisualizer({ onImageGenerated }: CircuitVisualizerProps) 
           <div className="space-y-4">
             <div className="space-y-2">
               <div className="flex justify-between">
-                <Label htmlFor="depth">Profondeur du circuit: {params.depth}</Label>
+                <Label htmlFor="depth">Profondeur du circuit</Label>
+                <span className="font-medium bg-primary/10 px-2 py-0.5 rounded-md text-primary">{params.depth}</span>
               </div>
               <Slider 
                 id="depth"
@@ -236,7 +238,8 @@ export function CircuitVisualizer({ onImageGenerated }: CircuitVisualizerProps) 
             
             <div className="space-y-2">
               <div className="flex justify-between">
-                <Label htmlFor="shots">Nombre de shots: {params.shots}</Label>
+                <Label htmlFor="shots">Nombre de shots</Label>
+                <span className="font-medium bg-primary/10 px-2 py-0.5 rounded-md text-primary">{params.shots}</span>
               </div>
               <Slider 
                 id="shots"

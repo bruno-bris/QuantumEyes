@@ -4,7 +4,7 @@ import fetch from 'node-fetch';
 // URL de base pour l'API du serveur QML (soit réel soit simulé)
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? 'http://localhost:5001'  // URL du serveur QML réel en production
-  : 'http://localhost:5002';  // URL du serveur QML simulé en développement
+  : 'http://localhost:5001';  // URL du serveur QML simulé en développement
 
 /**
  * Routes pour la visualisation quantique interactive
