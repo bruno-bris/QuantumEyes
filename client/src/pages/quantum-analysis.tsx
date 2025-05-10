@@ -115,6 +115,7 @@ export default function QuantumAnalysis() {
   const [trainingError, setTrainingError] = useState<string | null>(null);
   const [trainingDataset, setTrainingDataset] = useState("auto");
   const [trainSplit, setTrainSplit] = useState(80);
+  const [maxIterations, setMaxIterations] = useState(80);
   
   // Charger le statut du service quantum
   useEffect(() => {
@@ -310,7 +311,8 @@ export default function QuantumAnalysis() {
         reps: reps,
         optimizer: optimizer,
         backend: backend,
-        shots: shots
+        shots: shots,
+        max_iterations: maxIterations
       };
       
       // Appeler l'API d'entraînement
