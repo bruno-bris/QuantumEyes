@@ -50,6 +50,7 @@ export interface ReportContent {
   circuit_image_url: string;
   histogram_image_url: string;
   timestamp: string;
+  anomaly_detected?: boolean;
 }
 
 // Type pour un rapport
