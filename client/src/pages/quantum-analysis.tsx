@@ -269,6 +269,13 @@ export default function QuantumAnalysis() {
   
   // Exécuter la détection d'anomalies
   const runAnomalyDetection = async () => {
+    // Si l'analyse est déjà terminée, réinitialiser l'état
+    if (detectionProgress === 100) {
+      setDetectionProgress(0);
+      setAnomaliesResult(null);
+      return;
+    }
+    
     setSimulationRunning(true);
     setDetectionProgress(0);
     
@@ -852,7 +859,7 @@ export default function QuantumAnalysis() {
                 onClick={runAnomalyDetection}
                 className={detectionProgress === 100 ? "bg-green-600 hover:bg-green-700" : ""}
               >
-                {detectionProgress === 100 ? "Analyse terminée" : "Lancer l'analyse QML"}
+                {detectionProgress === 100 ? "Lancer une nouvelle analyse" : "Lancer l'analyse QML"}
               </Button>
             </CardFooter>
           </Card>
