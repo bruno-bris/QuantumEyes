@@ -772,7 +772,73 @@ export default function QuantumAnalysis() {
                         <span className="text-sm font-medium">93.7%</span>
                       </div>
                     </div>
-                    <Button variant="outline" className="w-full mt-4">
+                    <Button 
+                      variant="outline" 
+                      className="w-full mt-4"
+                      onClick={() => {
+                        if (anomaliesResult) {
+                          // Créer un rapport basé sur les résultats d'analyse
+                          fetch('/api/reports', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              title: `Rapport d'analyse quantique - ${new Date().toLocaleDateString('fr-FR')}`,
+                              description: `Analyse de détection d'anomalies par QML - ${anomaliesResult.anomalies_detected} anomalies détectées sur ${anomaliesResult.connections_analyzed} connexions.`,
+                              type: 'threat',
+                              content: JSON.stringify({
+                                anomalies: anomaliesResult.anomalies,
+                                metrics: anomaliesResult.metrics,
+                                quantum_details: anomaliesResult.quantum_simulation || {
+                                  qubits: qmlStatus?.qubits || 4,
+                                  shots: qmlStatus?.shots || 1024,
+                                  feature_map: qmlStatus?.feature_map || 'zz',
+                                  ansatz: qmlStatus?.ansatz || 'real'
+                                },
+                                execution_time: anomaliesResult.execution_time,
+                                graph_image_url: anomaliesResult.graph_image_url,
+                                circuit_image_url: anomaliesResult.circuit_image_url,
+                                histogram_image_url: anomaliesResult.histogram_image_url,
+                                timestamp: new Date().toISOString()
+                              }),
+                              metrics: {
+                                securityScore: Math.round(100 - (anomaliesResult.anomalies_detected / anomaliesResult.connections_analyzed * 100)),
+                                threats: anomaliesResult.anomalies_detected,
+                                vulnerabilities: Math.round(anomaliesResult.anomalies_detected * 1.5)
+                              },
+                              organizationId: 1, // Par défaut, utiliser l'organisation 1
+                              iconType: "shield"
+                            })
+                          })
+                          .then(response => response.json())
+                          .then(data => {
+                            if (data.report && data.report.id) {
+                              toast({
+                                title: "Rapport créé",
+                                description: "Le rapport détaillé a été généré et ajouté à la section Rapports.",
+                              });
+                              // Rediriger vers la page des rapports
+                              window.location.href = '/reports';
+                            } else {
+                              throw new Error("Échec de la création du rapport");
+                            }
+                          })
+                          .catch(error => {
+                            console.error("Erreur lors de la création du rapport:", error);
+                            toast({
+                              title: "Erreur",
+                              description: "Impossible de générer le rapport détaillé.",
+                              variant: "destructive",
+                            });
+                          });
+                        } else {
+                          toast({
+                            title: "Aucune donnée",
+                            description: "Vous devez d'abord lancer une analyse pour générer un rapport.",
+                            variant: "destructive",
+                          });
+                        }
+                      }}
+                    >
                       Voir le rapport détaillé
                     </Button>
                   </div>
