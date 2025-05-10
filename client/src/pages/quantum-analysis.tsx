@@ -509,21 +509,26 @@ export default function QuantumAnalysis() {
                   </div>
 
                   <div>
-                    <Label htmlFor="qubits">Nombre de qubits</Label>
+                    <div className="flex justify-between">
+                      <Label htmlFor="qubits">Nombre de qubits</Label>
+                      <span className="font-medium bg-primary/10 px-2 py-0.5 rounded-md text-primary">{numQubits}</span>
+                    </div>
                     <div className="grid grid-cols-6 items-center gap-2 mt-1">
                       <Input
                         id="qubits"
                         type="number"
                         min={2}
                         max={8}
-                        defaultValue={4}
+                        value={numQubits}
+                        onChange={(e) => setNumQubits(parseInt(e.target.value) || 4)}
                         className="col-span-1"
                       />
                       <Slider
-                        defaultValue={[4]}
+                        value={[numQubits]}
                         max={8}
                         min={2}
                         step={1}
+                        onValueChange={(value) => setNumQubits(value[0])}
                         className="col-span-5"
                       />
                     </div>
