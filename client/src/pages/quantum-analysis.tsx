@@ -121,7 +121,7 @@ export default function QuantumAnalysis() {
       const response = await fetch('/api/quantum/status');
       const data = await response.json();
       
-      if (data.status === "operational") {
+      if (data.status === "operational" || data.status === "running") {
         setQmlStatus(data);
         setIbmConnected(data.ibm_connected);
         
@@ -383,8 +383,8 @@ export default function QuantumAnalysis() {
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Connexion IBM</span>
-                <span className={`text-sm font-medium ${ibmConnected ? 'text-green-600' : 'text-amber-600'}`}>
-                  {ibmConnected ? "Connecté" : "Non connecté"}
+                <span className={`text-sm font-medium ${ibmConnected ? 'text-green-600' : backend === 'simulator' ? 'text-blue-600' : 'text-amber-600'}`}>
+                  {ibmConnected ? "Connecté" : backend === 'simulator' ? "Simulation locale" : "Non connecté"}
                 </span>
               </div>
             </div>
