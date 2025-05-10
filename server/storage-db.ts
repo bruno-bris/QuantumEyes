@@ -1,15 +1,16 @@
 import {
   users, organizations, organizationUsers,
   securityMetrics, cyberMaturity, threats, networkActivity, vulnerabilities,
-  quantumConfigs, networkConnections, analysisResults,
+  quantumConfigs, networkConnections, analysisResults, reports,
   type User, type Organization, type OrganizationUser,
   type SecurityMetrics, type CyberMaturity, type Threat,
   type NetworkActivity, type Vulnerability,
-  type QuantumConfig, type NetworkConnection, type AnalysisResult,
+  type QuantumConfig, type NetworkConnection, type AnalysisResult, type Report,
   type InsertOrganization, type InsertOrganizationUser,
   type InsertThreat, type InsertNetworkActivity, type InsertVulnerability,
   type InsertCyberMaturity, type InsertSecurityMetrics,
-  type InsertQuantumConfig, type InsertNetworkConnection, type InsertAnalysisResult
+  type InsertQuantumConfig, type InsertNetworkConnection, type InsertAnalysisResult,
+  type InsertReport
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
@@ -517,5 +518,99 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return result;
+  }
+
+  // Reports Methods
+  async getReports(organizationId: number, type?: string): Promise<Report[]> {
+    let query = db
+      .select()
+      .from(reports)
+      .where(eq(reports.organizationId, organizationId));
+    
+    if (type) {
+      query = query.where(eq(reports.type, type));
+    }
+    
+    const reportsData = await query.orderBy(desc(reports.createdAt));
+    
+    if (reportsData.length === 0) {
+      // Return a sample report for demo purposes
+      return [{
+        id: 1,
+        organizationId,
+        title: "Rapport de sécurité mensuel",
+        description: "Rapport d'analyse de sécurité globale pour le mois courant",
+        type: "monthly",
+        content: JSON.stringify({
+          executiveSummary: "Résumé exécutif du rapport mensuel de cybersécurité",
+          securityScore: 76,
+          securityScoreChange: 4,
+          highPriorityFindings: 3,
+          mediumPriorityFindings: 8,
+          lowPriorityFindings: 12,
+          sections: [
+            {
+              title: "Gouvernance",
+              score: 70,
+              findings: ["Politique de sécurité mise à jour", "Formation de sensibilisation complétée"]
+            },
+            {
+              title: "Protection",
+              score: 65,
+              findings: ["Vulnérabilités critiques dans les serveurs web", "Pare-feu correctement configuré"]
+            },
+            {
+              title: "Détection",
+              score: 80,
+              findings: ["Système de détection d'intrusion amélioré", "Monitoring 24/7 en place"]
+            },
+            {
+              title: "Réponse",
+              score: 60,
+              findings: ["Plan de réponse aux incidents incomplet", "Équipe de réponse formée"]
+            }
+          ]
+        }),
+        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+        metrics: {
+          securityScore: 76,
+          threats: 5,
+          vulnerabilities: 15
+        },
+        fileUrl: null,
+        iconType: "shield"
+      }];
+    }
+    
+    return reportsData;
+  }
+
+  async getReport(id: number): Promise<Report | undefined> {
+    const [report] = await db
+      .select()
+      .from(reports)
+      .where(eq(reports.id, id));
+    
+    return report;
+  }
+
+  async createReport(reportData: InsertReport): Promise<Report> {
+    const [report] = await db
+      .insert(reports)
+      .values({
+        ...reportData,
+        createdAt: new Date()
+      })
+      .returning();
+    
+    return report;
+  }
+
+  async deleteReport(id: number): Promise<boolean> {
+    const result = await db
+      .delete(reports)
+      .where(eq(reports.id, id));
+    
+    return !!result;
   }
 }

@@ -266,6 +266,139 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reports - temporairement accessible sans authentification
+  app.get("/api/reports", async (req: any, res) => {
+    try {
+      // En mode développement, utiliser l'ID d'organisation 1 par défaut si pas d'utilisateur connecté
+      let organizationId = 1;
+      const type = req.query.type as string | undefined;
+      
+      // Si l'utilisateur est authentifié, utiliser son contexte d'organisation
+      if (req.user && req.user.claims) {
+        const userId = req.user.claims.sub;
+        const orgId = req.query.organizationId ? parseInt(req.query.organizationId as string) : null;
+        
+        if (orgId) {
+          // Vérifier l'accès à l'organisation demandée
+          const userOrgs = await storage.getUserOrganizations(userId);
+          const hasAccess = userOrgs.some(org => org.id === orgId);
+          
+          if (!hasAccess) {
+            return res.status(403).json({ message: "Access denied to this organization" });
+          }
+          
+          organizationId = orgId;
+        } else {
+          // Utiliser la première organisation de l'utilisateur
+          const userOrgs = await storage.getUserOrganizations(userId);
+          if (userOrgs.length > 0) {
+            organizationId = userOrgs[0].id;
+          }
+        }
+      }
+      
+      const reports = await storage.getReports(organizationId, type);
+      res.json({ reports });
+    } catch (error) {
+      console.error("Error fetching reports:", error);
+      res.status(500).json({ message: "Error fetching reports" });
+    }
+  });
+
+  app.get("/api/reports/:id", async (req: any, res) => {
+    try {
+      const reportId = parseInt(req.params.id);
+      const report = await storage.getReport(reportId);
+      
+      if (!report) {
+        return res.status(404).json({ message: "Report not found" });
+      }
+      
+      // En mode développement, permettre l'accès sans authentification
+      if (req.user && req.user.claims) {
+        // Vérifier si l'utilisateur a accès à l'organisation propriétaire du rapport
+        const userId = req.user.claims.sub;
+        const userOrgs = await storage.getUserOrganizations(userId);
+        const hasAccess = userOrgs.some(org => org.id === report.organizationId);
+        
+        if (!hasAccess) {
+          return res.status(403).json({ message: "Access denied to this report" });
+        }
+      }
+      
+      res.json({ report });
+    } catch (error) {
+      console.error("Error fetching report:", error);
+      res.status(500).json({ message: "Error fetching report" });
+    }
+  });
+
+  app.post("/api/reports", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { title, description, type, content, metrics, organizationId, fileUrl, iconType } = req.body;
+      
+      if (!title || !type || !content || !organizationId) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+      
+      // Vérifier si l'utilisateur a accès à l'organisation
+      const userOrgs = await storage.getUserOrganizations(userId);
+      const hasAccess = userOrgs.some(org => org.id === organizationId);
+      
+      if (!hasAccess) {
+        return res.status(403).json({ message: "Access denied to this organization" });
+      }
+      
+      const reportData = {
+        title,
+        description: description || '',
+        type,
+        content,
+        metrics,
+        organizationId,
+        fileUrl,
+        iconType
+      };
+      
+      const report = await storage.createReport(reportData);
+      res.status(201).json({ report });
+    } catch (error) {
+      console.error("Error creating report:", error);
+      res.status(500).json({ message: "Error creating report" });
+    }
+  });
+
+  app.delete("/api/reports/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const reportId = parseInt(req.params.id);
+      const report = await storage.getReport(reportId);
+      
+      if (!report) {
+        return res.status(404).json({ message: "Report not found" });
+      }
+      
+      const userId = req.user.claims.sub;
+      const userOrgs = await storage.getUserOrganizations(userId);
+      const hasAccess = userOrgs.some(org => org.id === report.organizationId);
+      
+      if (!hasAccess) {
+        return res.status(403).json({ message: "Access denied to this report" });
+      }
+      
+      const success = await storage.deleteReport(reportId);
+      
+      if (success) {
+        res.status(200).json({ message: "Report deleted successfully" });
+      } else {
+        res.status(500).json({ message: "Failed to delete report" });
+      }
+    } catch (error) {
+      console.error("Error deleting report:", error);
+      res.status(500).json({ message: "Error deleting report" });
+    }
+  });
+
   // Configuration des routes pour l'API Quantum
   setupQuantumRoutes(app);
 

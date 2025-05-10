@@ -278,9 +278,10 @@ export const reports = pgTable("reports", {
   organizationId: integer("organization_id").notNull().references(() => organizations.id),
   title: text("title").notNull(),
   description: text("description").notNull(),
-  type: text("type").notNull(), // compliance, threat, vulnerability, continuity
+  type: text("type").notNull(), // compliance, threat, vulnerability, continuity, monthly, weekly
+  content: text("content").notNull(), // JSON stringified content
+  metrics: json("metrics"), // JSON metrics data
   createdAt: timestamp("created_at").defaultNow(),
-  data: json("data").notNull(),
   fileUrl: text("file_url"),
   iconType: text("icon_type").default("shield"), // shield, building2, file-text 
 });
@@ -290,7 +291,8 @@ export const insertReportSchema = createInsertSchema(reports).pick({
   title: true,
   description: true,
   type: true,
-  data: true,
+  content: true,
+  metrics: true,
   fileUrl: true,
   iconType: true,
 });
