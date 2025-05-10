@@ -361,11 +361,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Cette route ne nécessite pas d'authentification pour le développement
   app.post("/api/quantum/create-report", async (req, res) => {
     try {
+      console.log("Création d'un rapport quantique...");
+      console.log("Body reçu:", JSON.stringify(req.body));
+      
       // Par défaut, organisation 1 pour le développement
       const organizationId = req.body.organizationId || 1;
       const { title, description, type, content, metrics, fileUrl, iconType } = req.body;
       
       if (!title || !type || !content) {
+        console.log("Champs manquants:", { title, type, content });
         return res.status(400).json({ message: "Missing required fields" });
       }
       
@@ -380,11 +384,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         iconType: iconType || "file"
       };
       
+      console.log("Données du rapport à créer:", reportData);
+      
       const report = await storage.createReport(reportData);
-      res.status(201).json({ report });
+      console.log("Rapport créé avec succès:", report);
+      
+      return res.status(201).json({ 
+        success: true,
+        report,
+        message: "Rapport créé avec succès"
+      });
     } catch (error) {
       console.error("Error creating quantum report:", error);
-      res.status(500).json({ message: "Error creating quantum report" });
+      return res.status(500).json({ 
+        success: false,
+        message: "Error creating quantum report", 
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 

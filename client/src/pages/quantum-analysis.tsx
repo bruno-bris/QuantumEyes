@@ -782,13 +782,18 @@ export default function QuantumAnalysis() {
                     <Button 
                       variant="outline" 
                       className="w-full mt-4"
-                      onClick={() => {
+                      onClick={async () => {
                         if (anomaliesResult) {
-                          // Créer un rapport basé sur les résultats d'analyse en utilisant la route non-authentifiée
-                          fetch('/api/quantum/create-report', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
+                          toast({
+                            title: "Création du rapport",
+                            description: "Génération du rapport détaillé en cours...",
+                          });
+                          
+                          try {
+                            console.log("Création d'un rapport détaillé...");
+                            
+                            // Créer un rapport basé sur les résultats d'analyse en utilisant la route non-authentifiée
+                            const reportData = {
                               title: `Rapport d'analyse quantique - ${new Date().toLocaleDateString('fr-FR')}`,
                               description: `Analyse de détection d'anomalies par QML - ${anomaliesResult.anomalies_detected} anomalies détectées sur ${anomaliesResult.connections_analyzed} connexions.`,
                               type: 'threat',
@@ -814,34 +819,50 @@ export default function QuantumAnalysis() {
                               },
                               organizationId: 1, // Par défaut, utiliser l'organisation 1
                               iconType: "shield"
-                            })
-                          })
-                          .then(response => {
-                            if (!response.ok) {
-                              throw new Error(`Erreur HTTP: ${response.status}`);
+                            };
+                            
+                            console.log("Données du rapport:", reportData);
+                            
+                            const response = await fetch('/api/quantum/create-report', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify(reportData)
+                            });
+                            
+                            console.log("Statut de la réponse:", response.status);
+                            const responseText = await response.text();
+                            console.log("Réponse brute:", responseText);
+                            
+                            let data;
+                            try {
+                              data = JSON.parse(responseText);
+                            } catch (e) {
+                              console.error("Erreur de parsing JSON:", e);
+                              throw new Error("Format de réponse invalide");
                             }
-                            return response.json();
-                          })
-                          .then(data => {
-                            if (data.report && data.report.id) {
+                            
+                            console.log("Données reçues:", data);
+                            
+                            if (data && data.success && data.report && data.report.id) {
                               toast({
                                 title: "Rapport créé",
                                 description: "Le rapport détaillé a été généré et ajouté à la section Rapports.",
                               });
                               // Rediriger vers la page des rapports
-                              window.location.href = '/reports';
+                              setTimeout(() => {
+                                window.location.href = '/reports';
+                              }, 1000);
                             } else {
-                              throw new Error("Échec de la création du rapport");
+                              throw new Error(data.message || "Échec de la création du rapport");
                             }
-                          })
-                          .catch(error => {
+                          } catch (error) {
                             console.error("Erreur lors de la création du rapport:", error);
                             toast({
                               title: "Erreur",
-                              description: "Impossible de générer le rapport détaillé.",
+                              description: error instanceof Error ? error.message : "Impossible de générer le rapport détaillé.",
                               variant: "destructive",
                             });
-                          });
+                          }
                         } else {
                           toast({
                             title: "Aucune donnée",
