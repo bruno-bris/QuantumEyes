@@ -119,11 +119,14 @@ export const NetworkGraph = ({
     if (!d3 || !nodes || !processedEdges) return;
 
     try {
+      const graphContainer = document.getElementById("network-graph");
+      if (!graphContainer) return;
+      
       // Nettoyer le conteneur avant de dessiner
-      d3.select("#network-graph").selectAll("*").remove();
+      d3.select(graphContainer).selectAll("*").remove();
       
       // Créer le SVG
-      const svg = d3.select("#network-graph")
+      const svg = d3.select(graphContainer)
         .append("svg")
         .attr("width", width)
         .attr("height", height)

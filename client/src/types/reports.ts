@@ -36,6 +36,7 @@ export interface QuantumSimulationResults {
   counts: Record<string, number>;
   fidelity?: number;
   success_rate?: number;
+  anomalous_states?: string[];
 }
 
 // Type pour le contenu du rapport

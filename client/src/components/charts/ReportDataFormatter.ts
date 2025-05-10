@@ -9,12 +9,17 @@ import { ReportContent, Anomaly } from "../../types/reports";
  */
 export const parseQuantumHistogramData = (
   content?: ReportContent | null
-): Record<string, number> | null => {
-  if (!content) return null;
+): { state: string; count: number; isAnomaly?: boolean }[] => {
+  if (!content) return [];
 
   // Si des données de simulation existent dans le rapport, les utiliser
   if (content.quantum_simulation?.counts) {
-    return content.quantum_simulation.counts;
+    const counts = content.quantum_simulation.counts;
+    return Object.entries(counts).map(([state, count]) => ({
+      state,
+      count: typeof count === 'number' ? count : parseInt(count as string, 10),
+      isAnomaly: content.quantum_simulation?.anomalous_states?.includes(state) || false
+    }));
   }
 
   // Créer un histogramme simulé basé sur le nombre de qubits
@@ -43,7 +48,16 @@ export const parseQuantumHistogramData = (
     }
   }
 
-  return result;
+  // Convertir en format attendu par le composant QuantumHistogram
+  const formattedResult = Object.entries(result)
+    .map(([state, count]) => ({
+      state,
+      count,
+      isAnomaly: content.anomaly_detected && (state === allOnes || state === allZeros)
+    }))
+    .sort((a, b) => b.count - a.count); // Trier par comptes décroissants
+
+  return formattedResult;
 };
 
 /**
