@@ -340,10 +340,10 @@ export default function QuantumAnalysis() {
       }
     } catch (error) {
       console.error("Erreur lors de l'entraînement:", error);
-      setTrainingError("Impossible de communiquer avec le serveur quantum.");
+      setTrainingError(`Impossible de communiquer avec le serveur quantum: ${error instanceof Error ? error.message : String(error)}`);
       toast({
         title: "Erreur de connexion",
-        description: "Impossible de communiquer avec le serveur quantum.",
+        description: `Impossible de communiquer avec le serveur quantum: ${error instanceof Error ? error.message : String(error)}`,
         variant: "destructive",
       });
     } finally {
@@ -1097,14 +1097,16 @@ export default function QuantumAnalysis() {
                         min={50}
                         max={500}
                         step={10}
-                        defaultValue={80}
+                        value={maxIterations}
+                        onChange={(e) => setMaxIterations(Number(e.target.value))}
                         className="col-span-1"
                       />
                       <Slider
-                        defaultValue={[80]}
+                        value={[maxIterations]}
                         max={500}
                         min={50}
                         step={10}
+                        onValueChange={(value) => setMaxIterations(value[0])}
                         className="col-span-5"
                       />
                     </div>
