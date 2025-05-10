@@ -370,7 +370,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!title || !type || !content) {
         console.log("Champs manquants:", { title, type, content });
-        return res.status(400).json({ message: "Missing required fields" });
+        return res.status(400)
+          .set('Content-Type', 'application/json')
+          .send(JSON.stringify({ 
+            success: false, 
+            message: "Missing required fields" 
+          }));
       }
       
       const reportData = {
@@ -389,18 +394,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const report = await storage.createReport(reportData);
       console.log("Rapport créé avec succès:", report);
       
-      return res.status(201).json({ 
+      // Réponse simplifiée pour éviter tout problème de format
+      const responseData = { 
         success: true,
-        report,
+        report: {
+          id: report.id,
+          title: report.title,
+          type: report.type
+        },
         message: "Rapport créé avec succès"
-      });
+      };
+      
+      console.log("Envoi de la réponse:", JSON.stringify(responseData));
+      
+      // Utiliser send() au lieu de json() pour un meilleur contrôle
+      return res.status(201)
+        .set('Content-Type', 'application/json')
+        .send(JSON.stringify(responseData));
     } catch (error) {
       console.error("Error creating quantum report:", error);
-      return res.status(500).json({ 
-        success: false,
-        message: "Error creating quantum report", 
-        error: error instanceof Error ? error.message : String(error)
-      });
+      
+      // Réponse d'erreur simplifiée
+      return res.status(500)
+        .set('Content-Type', 'application/json')
+        .send(JSON.stringify({ 
+          success: false,
+          message: "Error creating quantum report", 
+          error: error instanceof Error ? error.message : String(error)
+        }));
     }
   });
 
